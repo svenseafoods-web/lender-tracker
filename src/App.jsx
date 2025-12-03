@@ -34,6 +34,66 @@ function App() {
     }
   }, []);
 
+  // Save data whenever loans change
+  useEffect(() => {
+    if (loans.length > 0) {
+      const timestamp = new Date().toISOString();
+      saveLoans(loans);
+      localStorage.setItem('lender_tracker_last_updated', timestamp);
+      console.log(`💾 Saved ${loans.length} loans to localStorage at ${timestamp}`);
+    }
+  }, [loans]);
+
+  // Reusable sync function
+  const syncWithCloud = async (userEmail, token) => {
+    try {
+      setCloudSyncStatus('syncing');
+      const cloudData = await downloadEncryptedBackup(userEmail, token);
+
+      if (cloudData && cloudData.loans && cloudData.loans.length > 0) {
+        const localLoans = loadLoans();
+        const localTimestamp = localStorage.getItem('lender_tracker_last_updated');
+        const cloudTimestamp = cloudData.timestamp;
+
+        console.log('Sync Check:', {
+          localCount: localLoans.length,
+          localTime: localTimestamp,
+          cloudCount: cloudData.loans.length,
+          cloudTime: cloudTimestamp
+        });
+
+        // Logic:
+        // 1. If no local data, take cloud
+        // 2. If cloud is newer than local, take cloud
+        // 3. If local is newer, keep local (it will auto-upload soon)
+
+        const shouldRestore =
+          localLoans.length === 0 ||
+          !localTimestamp ||
+          (cloudTimestamp && new Date(cloudTimestamp) > new Date(localTimestamp));
+
+        if (shouldRestore) {
+          setLoans(cloudData.loans);
+          // Update local timestamp to match cloud so we don't re-sync unnecessarily
+          localStorage.setItem('lender_tracker_last_updated', cloudTimestamp || new Date().toISOString());
+
+          if (localLoans.length === 0) {
+            alert(`✅ Restored ${cloudData.loans.length} loans from cloud!`);
+          } else {
+            alert(`✅ Synced with cloud: Found newer data from ${new Date(cloudTimestamp).toLocaleTimeString()}`);
+          }
+        } else {
+          console.log('Local data is newer or same age, keeping local.');
+        }
+      }
+      setCloudSyncStatus('success');
+    } catch (error) {
+      console.error('Sync failed:', error);
+      setCloudSyncStatus('error');
+      // Don't alert on auto-sync error to avoid annoyance, just show status icon
+    }
+  };
+
   // Auto-backup to cloud every 5 minutes (Encrypted)
   useEffect(() => {
     if (!accessToken || !user || loans.length === 0) return;
