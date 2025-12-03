@@ -99,6 +99,13 @@ function App() {
     if (!accessToken || !user || loans.length === 0) return;
 
     const autoBackup = async () => {
+      // SAFETY CHECK: Never auto-backup an empty list.
+      // This prevents overwriting cloud data when logging in from a new device.
+      if (loans.length === 0) {
+        console.log('Skipping auto-backup: No local loans to save.');
+        return;
+      }
+
       try {
         setCloudSyncStatus('syncing');
         await uploadEncryptedBackup(loans, user.email, accessToken);
