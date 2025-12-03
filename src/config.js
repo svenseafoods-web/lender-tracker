@@ -7,7 +7,7 @@ export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "218160
 // In Vercel, set VITE_ALLOWED_EMAILS=email1@gmail.com,email2@gmail.com
 // For local development, create a .env file with: VITE_ALLOWED_EMAILS=your-email@gmail.com
 const allowedEmailsEnv = import.meta.env.VITE_ALLOWED_EMAILS || "svenseafoods@gmail.com";
-export const ALLOWED_EMAILS = allowedEmailsEnv.split(',').map(email => email.trim());
+export const ALLOWED_EMAILS = allowedEmailsEnv.split(',').map(email => email.trim().replace(/^["']|["']$/g, '').toLowerCase());
 
 // Scopes required for Google Drive access and user info
 export const SCOPES = "https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";

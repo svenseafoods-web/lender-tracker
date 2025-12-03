@@ -29,16 +29,10 @@ function App() {
     if (session) {
       setUser(session.user);
       setAccessToken(session.accessToken);
+      // Trigger immediate sync on load
+      syncWithCloud(session.user.email, session.accessToken);
     }
   }, []);
-
-  // Save data whenever loans change
-  useEffect(() => {
-    if (loans.length > 0) {
-      saveLoans(loans);
-      console.log(`💾 Saved ${loans.length} loans to localStorage`);
-    }
-  }, [loans]);
 
   // Auto-backup to cloud every 5 minutes (Encrypted)
   useEffect(() => {
@@ -49,6 +43,8 @@ function App() {
         setCloudSyncStatus('syncing');
         await uploadEncryptedBackup(loans, user.email, accessToken);
         setCloudSyncStatus('success');
+        // Update local timestamp after successful upload
+        localStorage.setItem('lender_tracker_last_updated', new Date().toISOString());
         setTimeout(() => setCloudSyncStatus('idle'), 3000);
       } catch (error) {
         console.error("Auto-backup failed:", error);
@@ -57,8 +53,8 @@ function App() {
       }
     };
 
-    // Initial backup after login/load
-    const timer = setTimeout(autoBackup, 5000);
+    // Initial backup after login/load - wait 10s to allow sync to finish first
+    const timer = setTimeout(autoBackup, 10000);
 
     // Set up interval
     const interval = setInterval(autoBackup, 5 * 60 * 1000); // 5 minutes
@@ -84,43 +80,13 @@ function App() {
 
       const email = res.data.email;
 
-      if (ALLOWED_EMAILS.includes(email)) {
+      if (ALLOWED_EMAILS.includes(email.toLowerCase())) {
         setUser(res.data);
         setAccessToken(tokenResponse.access_token);
         saveSession(res.data, tokenResponse.access_token);
 
-        // Try to restore from encrypted cloud backup
-        try {
-          setCloudSyncStatus('syncing');
-          const cloudLoans = await downloadEncryptedBackup(email, tokenResponse.access_token);
-          if (cloudLoans && cloudLoans.length > 0) {
-            const localLoans = loadLoans();
-
-            // Always prefer cloud data as the source of truth
-            setLoans(cloudLoans);
-
-            if (localLoans.length === 0) {
-              alert(`✅ Restored ${cloudLoans.length} loans from secure cloud backup!`);
-            } else if (cloudLoans.length > localLoans.length) {
-              alert(`✅ Synced ${cloudLoans.length} loans from cloud (${cloudLoans.length - localLoans.length} new)`);
-            } else if (cloudLoans.length < localLoans.length) {
-              alert(`⚠️ Restored ${cloudLoans.length} loans from cloud. Local had ${localLoans.length} loans.`);
-            } else {
-              console.log(`✅ Synced ${cloudLoans.length} loans from cloud`);
-            }
-            setCloudSyncStatus('success');
-          } else {
-            // No cloud data found, use local data
-            const localLoans = loadLoans();
-            setLoans(localLoans);
-            setCloudSyncStatus('idle');
-          }
-        } catch (error) {
-          console.log('No cloud backup found or restore failed, using local data', error);
-          const localLoans = loadLoans();
-          setLoans(localLoans);
-          setCloudSyncStatus('idle');
-        }
+        // Trigger sync after login
+        await syncWithCloud(email, tokenResponse.access_token);
       } else {
         alert("Access Denied: Your email is not authorized.");
       }

@@ -128,7 +128,8 @@ export const downloadEncryptedBackup = async (userEmail, accessToken) => {
         const decryptedData = decryptData(encryptedData, userEmail);
 
         console.log(`✅ Restored ${decryptedData.loans.length} loans from encrypted backup`);
-        return decryptedData.loans;
+        // Return full object with timestamp for sync logic
+        return decryptedData;
     } catch (error) {
         console.error('Download/decrypt failed:', error);
         throw error;
