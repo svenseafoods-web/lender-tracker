@@ -1,0 +1,294 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
+import EntryForm from './components/EntryForm';
+import LoanList from './components/LoanList';
+import SummaryCards from './components/SummaryCards';
+import EditModal from './components/EditModal';
+import Login from './components/Login';
+import { loadLoans, saveLoans, loadSession, saveSession, clearSession, downloadBackupFile, uploadBackupFile } from './utils/storage';
+import { uploadEncryptedBackup, downloadEncryptedBackup } from './utils/driveApi';
+import { ALLOWED_EMAILS } from './config';
+import { LogOut, Download, Upload, Cloud, CloudOff } from 'lucide-react';
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
+  const [loans, setLoans] = useState([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingLoan, setEditingLoan] = useState(null);
+  const [tick, setTick] = useState(0);
+  const [cloudSyncStatus, setCloudSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
+
+  // Load initial data and restore session
+  useEffect(() => {
+    const loaded = loadLoans();
+    setLoans(loaded);
+
+    // Restore session if available
+    const session = loadSession();
+    if (session) {
+      setUser(session.user);
+      setAccessToken(session.accessToken);
+    }
+  }, []);
+
+  // Save data whenever loans change
+  useEffect(() => {
+    if (loans.length > 0) {
+      saveLoans(loans);
+      console.log(`💾 Saved ${loans.length} loans to localStorage`);
+    }
+  }, [loans]);
+
+  // Auto-backup to cloud every 5 minutes (Encrypted)
+  useEffect(() => {
+    if (!accessToken || !user || loans.length === 0) return;
+
+    const autoBackup = async () => {
+      try {
+        setCloudSyncStatus('syncing');
+        await uploadEncryptedBackup(loans, user.email, accessToken);
+        setCloudSyncStatus('success');
+        setTimeout(() => setCloudSyncStatus('idle'), 3000);
+      } catch (error) {
+        console.error("Auto-backup failed:", error);
+        setCloudSyncStatus('error');
+        setTimeout(() => setCloudSyncStatus('idle'), 3000);
+      }
+    };
+
+    // Initial backup after login/load
+    const timer = setTimeout(autoBackup, 5000);
+
+    // Set up interval
+    const interval = setInterval(autoBackup, 5 * 60 * 1000); // 5 minutes
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [accessToken, user, loans]);
+
+  // Live update timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLoginSuccess = async (tokenResponse) => {
+    try {
+      const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+      });
+
+      const email = res.data.email;
+
+      if (ALLOWED_EMAILS.includes(email)) {
+        setUser(res.data);
+        setAccessToken(tokenResponse.access_token);
+        saveSession(res.data, tokenResponse.access_token);
+
+        // Try to restore from encrypted cloud backup
+        try {
+          setCloudSyncStatus('syncing');
+          const cloudLoans = await downloadEncryptedBackup(email, tokenResponse.access_token);
+          if (cloudLoans && cloudLoans.length > 0) {
+            const localLoans = loadLoans();
+
+            // Always prefer cloud data as the source of truth
+            setLoans(cloudLoans);
+
+            if (localLoans.length === 0) {
+              alert(`✅ Restored ${cloudLoans.length} loans from secure cloud backup!`);
+            } else if (cloudLoans.length > localLoans.length) {
+              alert(`✅ Synced ${cloudLoans.length} loans from cloud (${cloudLoans.length - localLoans.length} new)`);
+            } else if (cloudLoans.length < localLoans.length) {
+              alert(`⚠️ Restored ${cloudLoans.length} loans from cloud. Local had ${localLoans.length} loans.`);
+            } else {
+              console.log(`✅ Synced ${cloudLoans.length} loans from cloud`);
+            }
+            setCloudSyncStatus('success');
+          } else {
+            // No cloud data found, use local data
+            const localLoans = loadLoans();
+            setLoans(localLoans);
+            setCloudSyncStatus('idle');
+          }
+        } catch (error) {
+          console.log('No cloud backup found or restore failed, using local data', error);
+          const localLoans = loadLoans();
+          setLoans(localLoans);
+          setCloudSyncStatus('idle');
+        }
+      } else {
+        alert("Access Denied: Your email is not authorized.");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Login failed. Please try again.");
+    }
+  };
+
+  const handleDownloadBackup = () => {
+    const success = downloadBackupFile(loans);
+    if (success) {
+      alert('✅ Backup file downloaded! Save it somewhere safe.');
+    } else {
+      alert('❌ Backup download failed.');
+    }
+  };
+
+  const handleUploadBackup = async () => {
+    if (!window.confirm('This will replace your current data with the backup file. Continue?')) {
+      return;
+    }
+
+    try {
+      const restoredLoans = await uploadBackupFile();
+      setLoans(restoredLoans);
+      alert(`✅ Restored ${restoredLoans.length} loans from backup file!`);
+    } catch (error) {
+      alert('❌ Restore failed: ' + error.message);
+    }
+  };
+
+  const handleRestoreFromCloud = async () => {
+    if (!window.confirm('This will restore your data from Google Drive cloud backup. Any unsaved local changes will be replaced. Continue?')) {
+      return;
+    }
+
+    try {
+      setCloudSyncStatus('syncing');
+      const cloudLoans = await downloadEncryptedBackup(user.email, accessToken);
+      if (cloudLoans && cloudLoans.length > 0) {
+        setLoans(cloudLoans);
+        alert(`✅ Restored ${cloudLoans.length} loans from secure cloud backup!`);
+        setCloudSyncStatus('success');
+        setTimeout(() => setCloudSyncStatus('idle'), 3000);
+      } else {
+        alert('⚠️ No cloud backup found.');
+        setCloudSyncStatus('idle');
+      }
+    } catch (error) {
+      alert('❌ Cloud restore failed: ' + error.message);
+      setCloudSyncStatus('error');
+      setTimeout(() => setCloudSyncStatus('idle'), 3000);
+    }
+  };
+
+
+  const handleAddLoan = (newLoan) => {
+    setLoans(prev => [...prev, newLoan]);
+  };
+
+  const handleEditLoan = (loan) => {
+    setEditingLoan(loan);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = (updatedLoan) => {
+    setLoans(prev => prev.map(l => l.id === updatedLoan.id ? updatedLoan : l));
+    setEditingLoan(null);
+  };
+
+  const handleDeleteLoan = (loanId) => {
+    setLoans(prev => prev.filter(l => l.id !== loanId));
+  };
+
+  const handlePayInterest = (loan) => {
+    if (window.confirm(`Confirm interest payment for ${loan.borrower}? This will reset the start date to today.`)) {
+      const updatedLoan = {
+        ...loan,
+        startDate: new Date().toISOString().split('T')[0]
+      };
+      setLoans(prev => prev.map(l => l.id === loan.id ? updatedLoan : l));
+    }
+  };
+
+  const existingBorrowers = useMemo(() => {
+    return [...new Set(loans.map(l => l.borrower))].sort();
+  }, [loans]);
+
+  if (!user) {
+    return <Login onSuccess={handleLoginSuccess} onError={() => alert("Login Failed")} />;
+  }
+
+  return (
+    <div className="container">
+      <header style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '1.875rem', background: 'linear-gradient(to right, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Lender Tracker
+          </h1>
+          <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)' }}>
+            Welcome, {user.name}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {/* Cloud Status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-tertiary)' }}>
+            {cloudSyncStatus === 'syncing' && <Cloud size={16} className="animate-pulse" style={{ color: 'var(--accent-primary)' }} />}
+            {cloudSyncStatus === 'success' && <Cloud size={16} style={{ color: 'var(--success)' }} />}
+            {cloudSyncStatus === 'error' && <CloudOff size={16} style={{ color: 'var(--danger)' }} />}
+            {cloudSyncStatus === 'idle' && <Cloud size={16} style={{ color: 'var(--text-secondary)' }} />}
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              {cloudSyncStatus === 'syncing' ? 'Syncing...' : cloudSyncStatus === 'success' ? 'Secure' : cloudSyncStatus === 'error' ? 'Error' : 'Cloud'}
+            </span>
+          </div>
+
+          <button onClick={handleDownloadBackup} className="btn btn-secondary" title="Download Backup File">
+            <Download size={18} /> Download Backup
+          </button>
+          <button onClick={handleUploadBackup} className="btn btn-secondary" title="Upload Backup File">
+            <Upload size={18} /> Upload Backup
+          </button>
+          <button onClick={handleRestoreFromCloud} className="btn btn-secondary" title="Restore from Google Drive">
+            <Cloud size={18} /> Restore from Cloud
+          </button>
+          <button
+            onClick={() => {
+              setUser(null);
+              setAccessToken(null);
+              clearSession();
+            }}
+            className="btn btn-secondary"
+            title="Sign Out"
+          >
+            <LogOut size={18} /> Sign Out
+          </button>
+        </div>
+      </header>
+
+      <SummaryCards loans={loans} />
+
+      <EntryForm
+        onAddLoan={handleAddLoan}
+        existingBorrowers={existingBorrowers}
+      />
+
+      <LoanList
+        loans={loans}
+        onEdit={handleEditLoan}
+        onPayInterest={handlePayInterest}
+        onDelete={handleDeleteLoan}
+      />
+
+      <EditModal
+        loan={editingLoan}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveEdit}
+      />
+
+      <footer style={{ marginTop: '4rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+        <p>🔒 Data encrypted & auto-backed up to Google Drive • 💾 Local backup available</p>
+        <p style={{ fontSize: '0.7rem', marginTop: '0.5rem' }}>
+          {loans.length} loans • Last update: {new Date().toLocaleTimeString()}
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
