@@ -83,8 +83,9 @@ export const uploadEncryptedBackup = async (loans, userEmail, accessToken) => {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || 'Upload failed');
+            const errorData = await response.json();
+            console.error('Drive API Error Details:', JSON.stringify(errorData, null, 2));
+            throw new Error(errorData.error?.message || `Upload failed with status ${response.status}`);
         }
 
         console.log('✅ Encrypted backup uploaded to Google Drive');

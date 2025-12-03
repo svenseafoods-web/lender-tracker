@@ -81,17 +81,23 @@ function App() {
       const email = res.data.email;
 
       if (ALLOWED_EMAILS.includes(email.toLowerCase())) {
+        // 1. Success! Log the user in immediately
         setUser(res.data);
         setAccessToken(tokenResponse.access_token);
         saveSession(res.data, tokenResponse.access_token);
 
-        // Trigger sync after login
-        await syncWithCloud(email, tokenResponse.access_token);
+        // 2. Trigger sync in background (don't block login)
+        try {
+          await syncWithCloud(email, tokenResponse.access_token);
+        } catch (syncError) {
+          console.error("Background sync failed after login:", syncError);
+          // We don't alert here because the user is already logged in successfully
+        }
       } else {
         alert("Access Denied: Your email is not authorized.");
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Login process failed:", error);
       alert("Login failed. Please try again.");
     }
   };
