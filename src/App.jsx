@@ -241,6 +241,27 @@ function App() {
     }
   };
 
+  const handleBackupToCloud = async () => {
+    if (loans.length === 0) {
+      alert('⚠️ No loans to backup.');
+      return;
+    }
+
+    try {
+      setCloudSyncStatus('syncing');
+      await uploadEncryptedBackup(loans, user.email, accessToken);
+      localStorage.setItem('lender_tracker_last_updated', new Date().toISOString());
+      setCloudSyncStatus('success');
+      alert(`✅ Successfully backed up ${loans.length} loans to Google Drive!`);
+      setTimeout(() => setCloudSyncStatus('idle'), 3000);
+    } catch (error) {
+      setCloudSyncStatus('error');
+      alert('❌ Cloud backup failed: ' + error.message);
+      setTimeout(() => setCloudSyncStatus('idle'), 3000);
+    }
+  };
+
+
 
   const handleAddLoan = (newLoan) => {
     setLoans(prev => [...prev, newLoan]);
@@ -341,6 +362,9 @@ function App() {
           </button>
           <button onClick={handleRestoreFromCloud} className="btn btn-secondary" title="Restore from Google Drive">
             <Cloud size={18} /> Restore from Cloud
+          </button>
+          <button onClick={handleBackupToCloud} className="btn btn-secondary" title="Backup to Google Drive">
+            <Upload size={18} /> Backup to Cloud
           </button>
           <button
             onClick={() => {
