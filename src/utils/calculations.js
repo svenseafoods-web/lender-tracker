@@ -6,23 +6,29 @@ export const getToday = () => {
 };
 
 export const calculateMonthlyInterest = (principal, rate) => {
+    if (!principal || isNaN(principal) || !rate || isNaN(rate)) return 0;
     return (principal * rate) / 100 / 12;
 };
 
 export const calculateEMI = (principal, rate, tenureMonths) => {
-    if (!tenureMonths || tenureMonths <= 0) return 0;
+    if (!principal || isNaN(principal) || !rate || isNaN(rate) || !tenureMonths || tenureMonths <= 0) return 0;
     const monthlyRate = rate / 12 / 100;
     const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths)) / (Math.pow(1 + monthlyRate, tenureMonths) - 1);
-    return emi;
+    return isNaN(emi) ? 0 : emi;
 };
 
 export const calculateDailyCompound = (principal, rate, startDate) => {
+    if (!principal || isNaN(principal) || !rate || isNaN(rate) || !startDate) {
+        return { totalAmount: 0, interest: 0, days: 0 };
+    }
+
     const differenceInDays = (date2, date1) => {
         const diffTime = Math.abs(date2.getTime() - date1.getTime());
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     };
 
     const start = new Date(startDate);
+    if (isNaN(start.getTime())) return { totalAmount: 0, interest: 0, days: 0 };
     const now = new Date();
     const daysElapsed = differenceInDays(now, start);
 

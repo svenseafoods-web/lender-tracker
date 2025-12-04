@@ -5,6 +5,7 @@ import LoanList from './components/LoanList';
 import SummaryCards from './components/SummaryCards';
 import EditModal from './components/EditModal';
 import Login from './components/Login';
+import SingleLoanView from './components/SingleLoanView';
 import { loadLoans, saveLoans, loadSession, saveSession, clearSession, downloadBackupFile, uploadBackupFile } from './utils/storage';
 import { uploadEncryptedBackup, downloadEncryptedBackup } from './utils/driveApi';
 import { ALLOWED_EMAILS } from './config';
@@ -18,6 +19,7 @@ function App() {
   const [editingLoan, setEditingLoan] = useState(null);
   const [tick, setTick] = useState(0);
   const [cloudSyncStatus, setCloudSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
+  const [selectedLoanId, setSelectedLoanId] = useState('');
 
   // Load initial data and restore session
   useEffect(() => {
@@ -263,6 +265,23 @@ function App() {
           <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)' }}>
             Welcome, {user.name}
           </p>
+
+          {/* Loan Selector */}
+          <div style={{ marginTop: '1rem' }}>
+            <select
+              value={selectedLoanId}
+              onChange={(e) => setSelectedLoanId(e.target.value)}
+              className="input"
+              style={{ padding: '0.5rem', fontSize: '0.9rem', maxWidth: '300px' }}
+            >
+              <option value="">View All Loans</option>
+              {loans.map(loan => (
+                <option key={loan.id} value={loan.id}>
+                  {loan.borrower} - {new Date(loan.startDate).toLocaleDateString()} ({loan.loanType || 'simple'})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {/* Cloud Status */}
@@ -299,19 +318,34 @@ function App() {
         </div>
       </header>
 
-      <SummaryCards loans={loans} />
+      {selectedLoanId ? (
+        <SingleLoanView
+          loan={loans.find(l => l.id.toString() === selectedLoanId.toString())}
+          onBack={() => setSelectedLoanId('')}
+          onEdit={handleEditLoan}
+          onPayInterest={handlePayInterest}
+          onDelete={(loan) => {
+            handleDeleteLoan(loan.id);
+            setSelectedLoanId('');
+          }}
+        />
+      ) : (
+        <>
+          <SummaryCards loans={loans} />
 
-      <EntryForm
-        onAddLoan={handleAddLoan}
-        existingBorrowers={existingBorrowers}
-      />
+          <EntryForm
+            onAddLoan={handleAddLoan}
+            existingBorrowers={existingBorrowers}
+          />
 
-      <LoanList
-        loans={loans}
-        onEdit={handleEditLoan}
-        onPayInterest={handlePayInterest}
-        onDelete={handleDeleteLoan}
-      />
+          <LoanList
+            loans={loans}
+            onEdit={handleEditLoan}
+            onPayInterest={handlePayInterest}
+            onDelete={handleDeleteLoan}
+          />
+        </>
+      )}
 
       <EditModal
         loan={editingLoan}
