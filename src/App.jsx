@@ -6,6 +6,7 @@ import SummaryCards from './components/SummaryCards';
 import EditModal from './components/EditModal';
 import Login from './components/Login';
 import SingleLoanView from './components/SingleLoanView';
+import BorrowerDashboard from './components/BorrowerDashboard';
 import { loadLoans, saveLoans, loadSession, saveSession, clearSession, downloadBackupFile, uploadBackupFile } from './utils/storage';
 import { uploadEncryptedBackup, downloadEncryptedBackup } from './utils/driveApi';
 import { ALLOWED_EMAILS } from './config';
@@ -19,7 +20,7 @@ function App() {
   const [editingLoan, setEditingLoan] = useState(null);
   const [tick, setTick] = useState(0);
   const [cloudSyncStatus, setCloudSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
-  const [selectedLoanId, setSelectedLoanId] = useState('');
+  const [selectedBorrower, setSelectedBorrower] = useState('');
 
   // Load initial data and restore session
   useEffect(() => {
@@ -266,18 +267,18 @@ function App() {
             Welcome, {user.name}
           </p>
 
-          {/* Loan Selector */}
+          {/* Borrower Selector */}
           <div style={{ marginTop: '1rem' }}>
             <select
-              value={selectedLoanId}
-              onChange={(e) => setSelectedLoanId(e.target.value)}
+              value={selectedBorrower}
+              onChange={(e) => setSelectedBorrower(e.target.value)}
               className="input"
               style={{ padding: '0.5rem', fontSize: '0.9rem', maxWidth: '300px' }}
             >
-              <option value="">View All Loans</option>
-              {loans.map(loan => (
-                <option key={loan.id} value={loan.id}>
-                  {loan.borrower} - {new Date(loan.startDate).toLocaleDateString()} ({loan.loanType || 'simple'})
+              <option value="">View All Borrowers</option>
+              {existingBorrowers.map(name => (
+                <option key={name} value={name}>
+                  {name}
                 </option>
               ))}
             </select>
@@ -318,16 +319,14 @@ function App() {
         </div>
       </header>
 
-      {selectedLoanId ? (
-        <SingleLoanView
-          loan={loans.find(l => l.id.toString() === selectedLoanId.toString())}
-          onBack={() => setSelectedLoanId('')}
+      {selectedBorrower ? (
+        <BorrowerDashboard
+          borrowerName={selectedBorrower}
+          loans={loans.filter(l => l.borrower === selectedBorrower)}
+          onBack={() => setSelectedBorrower('')}
           onEdit={handleEditLoan}
           onPayInterest={handlePayInterest}
-          onDelete={(loan) => {
-            handleDeleteLoan(loan.id);
-            setSelectedLoanId('');
-          }}
+          onDelete={handleDeleteLoan}
         />
       ) : (
         <>
