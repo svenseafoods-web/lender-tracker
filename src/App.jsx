@@ -248,6 +248,21 @@ function App() {
     }
   };
 
+  const handleBulkUpdateLoanType = (borrowerName, loanType, tenure) => {
+    setLoans(prev => prev.map(loan => {
+      if (loan.borrower === borrowerName) {
+        return {
+          ...loan,
+          loanType: loanType,
+          tenure: loanType === 'emi' ? tenure : null
+        };
+      }
+      return loan;
+    }));
+    alert(`✅ Updated all loans for ${borrowerName} to ${loanType.toUpperCase()} type!`);
+  };
+
+
   const existingBorrowers = useMemo(() => {
     return [...new Set(loans.map(l => l.borrower))].sort();
   }, [loans]);
@@ -327,6 +342,7 @@ function App() {
           onEdit={handleEditLoan}
           onPayInterest={handlePayInterest}
           onDelete={handleDeleteLoan}
+          onBulkUpdateLoanType={handleBulkUpdateLoanType}
         />
       ) : (
         <>

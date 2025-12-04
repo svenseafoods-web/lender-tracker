@@ -1,9 +1,13 @@
-import React, { useMemo } from 'react';
-import { ArrowLeft, DollarSign, Percent, Clock, PlusCircle } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowLeft, DollarSign, Percent, Clock, PlusCircle, RefreshCw, X } from 'lucide-react';
 import { calculateInterest, calculateEMI, calculateDailyCompound, formatCurrency } from '../utils/calculations';
 import LoanList from './LoanList'; // Reusing the list/table component
 
-const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest, onDelete }) => {
+const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest, onDelete, onBulkUpdateLoanType }) => {
+    const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false);
+    const [selectedLoanType, setSelectedLoanType] = useState('simple');
+    const [selectedTenure, setSelectedTenure] = useState('');
+
 
     const totals = useMemo(() => {
         let totalPrincipal = 0;
@@ -36,6 +40,18 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
         return { totalPrincipal, totalInterest, totalDue, activeCount };
     }, [loans]);
 
+    const handleBulkUpdate = () => {
+        if (selectedLoanType === 'emi' && !selectedTenure) {
+            alert('Please enter tenure for EMI loans');
+            return;
+        }
+
+        if (window.confirm(`Update ALL ${loans.length} loans for ${borrowerName} to ${selectedLoanType.toUpperCase()} type?`)) {
+            onBulkUpdateLoanType(borrowerName, selectedLoanType, selectedTenure ? parseInt(selectedTenure) : null);
+            setShowBulkUpdateModal(false);
+        }
+    };
+
     return (
         <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
@@ -51,6 +67,15 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                         {totals.activeCount} Active Loans
                     </div>
+                </div>
+                <div style={{ marginLeft: 'auto' }}>
+                    <button
+                        onClick={() => setShowBulkUpdateModal(true)}
+                        className="btn btn-secondary"
+                        style={{ gap: '0.5rem' }}
+                    >
+                        <RefreshCw size={16} /> Update All Loan Types
+                    </button>
                 </div>
             </div>
 
@@ -87,6 +112,57 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
                 onPayInterest={onPayInterest}
                 onDelete={onDelete}
             />
+
+            {/* Bulk Update Modal */}
+            {showBulkUpdateModal && (
+                <div className="modal-overlay" onClick={() => setShowBulkUpdateModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ margin: 0 }}>Update All Loan Types</h3>
+                            <button onClick={() => setShowBulkUpdateModal(false)} className="btn-icon" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                                This will update ALL {loans.length} loans for <strong>{borrowerName}</strong> to the selected loan type.
+                            </p>
+
+                            <div className="input-group">
+                                <label className="input-label">New Loan Type</label>
+                                <select
+                                    className="input-field"
+                                    value={selectedLoanType}
+                                    onChange={e => setSelectedLoanType(e.target.value)}
+                                >
+                                    <option value="simple">Simple Interest</option>
+                                    <option value="emi">EMI (Home Loan)</option>
+                                    <option value="compound">Daily Compound (Line of Credit)</option>
+                                </select>
+                            </div>
+
+                            {selectedLoanType === 'emi' && (
+                                <div className="input-group">
+                                    <label className="input-label">Tenure (Months)</label>
+                                    <input
+                                        type="number"
+                                        className="input-field"
+                                        value={selectedTenure}
+                                        onChange={e => setSelectedTenure(e.target.value)}
+                                        placeholder="Enter tenure in months"
+                                    />
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                                <button onClick={() => setShowBulkUpdateModal(false)} className="btn btn-secondary">Cancel</button>
+                                <button onClick={handleBulkUpdate} className="btn btn-primary"><RefreshCw size={18} /> Update All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

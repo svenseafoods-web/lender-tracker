@@ -44,14 +44,14 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
         try {
             if (!loan.startDate) return;
 
+            const principal = Number(loan.principal || loan.amount) || 0;
+
             const { days, interest } = calculateInterest(
-                Number(loan.principal) || 0,
+                principal,
                 Number(loan.rate) || 0,
                 loan.startDate,
                 loan.endDate
             );
-
-            const principal = Number(loan.principal) || 0;
 
             totalPrincipal += principal;
             totalInterest += interest;
@@ -84,7 +84,7 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
         body: tableRows,
         theme: 'grid',
         headStyles: { fillColor: [59, 130, 246], halign: 'center' },
-        foot: [['Total', '', formatCurrency(totalPrincipal), '', totalDays, formatCurrency(totalInterest)]],
+        foot: [['Total', '', formatCurrency(totalPrincipal), '', '', formatCurrency(totalInterest)]],
         footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
     });
 
@@ -92,7 +92,8 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
     const finalY = doc.lastAutoTable.finalY + 10;
     doc.setFontSize(14);
     doc.setTextColor(40, 40, 40);
-    doc.text(`Total Interest to be Paid: ${formatCurrency(totalInterest)}`, 14, finalY);
+    doc.text(`Total Interest: ${formatCurrency(totalInterest)}`, 14, finalY);
+    doc.text(`Total Amount Due (Principal + Interest): ${formatCurrency(totalPrincipal + totalInterest)}`, 14, finalY + 8);
 
     return doc;
 };
