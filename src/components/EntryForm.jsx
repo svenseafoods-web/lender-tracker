@@ -1,179 +1,122 @@
 import React, { useState } from 'react';
-import { Plus, Calendar, DollarSign, Percent } from 'lucide-react';
+import { PlusCircle, Calendar, DollarSign, Percent, Clock, FileText } from 'lucide-react';
 import BorrowerSelect from './BorrowerSelect';
 
 const INTEREST_RATES = [6, 8, 10, 12, 15, 18, 24, 36];
-const PRINCIPAL_AMOUNTS = [
-    { label: 'Custom', value: '' },
-    { label: '₹50,000', value: 50000 },
-    { label: '₹1,00,000', value: 100000 },
-    { label: '₹2,00,000', value: 200000 },
-    { label: '₹3,00,000', value: 300000 },
-    { label: '₹5,00,000', value: 500000 },
-    { label: '₹10,00,000', value: 1000000 }
-];
 
 const EntryForm = ({ onAddLoan, existingBorrowers }) => {
+    const [isNewBorrower, setIsNewBorrower] = useState(false);
+    const [newBorrowerName, setNewBorrowerName] = useState('');
+
     const [formData, setFormData] = useState({
         borrower: '',
         principal: '',
-        principalMode: 'custom',
-        rate: '8',
-        rateMode: 'dropdown', // 'custom' or 'dropdown'
+        rate: '',
         startDate: new Date().toISOString().split('T')[0],
-        endDate: ''
+        loanType: 'simple', // 'simple', 'emi', 'compound'
+        tenure: '' // Only for EMI
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.borrower || !formData.principal || !formData.rate || !formData.startDate) return;
 
-        onAddLoan({
-            borrower: formData.borrower,
-            principal: parseFloat(formData.principal),
+        const borrowerName = isNewBorrower ? newBorrowerName : formData.borrower;
+
+        if (!borrowerName || !formData.principal || !formData.rate || !formData.startDate) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        if (formData.loanType === 'emi' && !formData.tenure) {
+            alert('Please enter tenure for EMI loan');
+            return;
+        }
+
+        const newLoan = {
+            id: Date.now(),
+            borrower: borrowerName,
+            amount: parseFloat(formData.principal),
             rate: parseFloat(formData.rate),
             startDate: formData.startDate,
-            endDate: formData.endDate,
-            id: Date.now().toString(),
+            loanType: formData.loanType,
+            tenure: formData.loanType === 'emi' ? parseInt(formData.tenure) : null,
+            status: 'active',
             history: []
-        });
+        };
 
-        // Reset form but keep date
-        setFormData(prev => ({
-            ...prev,
+        onAddLoan(newLoan);
+
+        // Reset form
+        setFormData({
             borrower: '',
             principal: '',
-            principalMode: 'custom',
-            rate: '8',
-            rateMode: 'dropdown',
-            endDate: ''
-        }));
-    };
-
-    const handlePrincipalModeChange = (mode) => {
-        setFormData({
-            ...formData,
-            principalMode: mode,
-            principal: mode === 'custom' ? '' : formData.principal
+            rate: '',
+            startDate: new Date().toISOString().split('T')[0],
+            loanType: 'simple',
+            tenure: ''
         });
-    };
-
-    const handleRateModeChange = (mode) => {
-        setFormData({
-            ...formData,
-            rateMode: mode,
-            rate: mode === 'custom' ? '' : '8'
-        });
+        setNewBorrowerName('');
+        setIsNewBorrower(false);
     };
 
     return (
         <div className="card" style={{ marginBottom: '2rem' }}>
-            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Plus className="text-accent-primary" /> New Loan Entry
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <PlusCircle size={24} className="text-primary" />
+                New Loan Entry
             </h2>
 
-            <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
 
-                <BorrowerSelect
-                    value={formData.borrower}
-                    onChange={(val) => setFormData({ ...formData, borrower: val })}
-                    existingBorrowers={existingBorrowers}
-                />
+                    {/* Borrower Selection */}
+                    <BorrowerSelect
+                        value={formData.borrower}
+                        onChange={(val) => setFormData({ ...formData, borrower: val })}
+                        existingBorrowers={existingBorrowers}
+                        isNew={isNewBorrower}
+                        onNewChange={setNewBorrowerName}
+                        onToggleNew={() => setIsNewBorrower(!isNewBorrower)}
+                    />
 
-                <div className="input-group">
-                    <label className="input-label">Principal Amount</label>
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                        <button
-                            type="button"
-                            onClick={() => handlePrincipalModeChange('custom')}
-                            className={formData.principalMode === 'custom' ? 'btn btn-primary' : 'btn btn-secondary'}
-                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', flex: 1 }}
-                        >
-                            Custom
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handlePrincipalModeChange('dropdown')}
-                            className={formData.principalMode === 'dropdown' ? 'btn btn-primary' : 'btn btn-secondary'}
-                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', flex: 1 }}
-                        >
-                            Preset
-                        </button>
+                    {/* Loan Type */}
+                    <div className="input-group">
+                        <label className="input-label">Loan Type</label>
+                        <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
+                            <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><FileText size={18} /></div>
+                            <select
+                                className="input-field"
+                                style={{ border: 'none', flex: 1, paddingLeft: 0, background: 'transparent' }}
+                                value={formData.loanType}
+                                onChange={e => setFormData({ ...formData, loanType: e.target.value })}
+                            >
+                                <option value="simple">Simple Interest</option>
+                                <option value="emi">EMI (Home Loan)</option>
+                                <option value="compound">Daily Compound (Line of Credit)</option>
+                            </select>
+                        </div>
                     </div>
 
-                    {formData.principalMode === 'custom' ? (
+                    {/* Principal Amount */}
+                    <div className="input-group">
+                        <label className="input-label">Principal Amount (₹)</label>
                         <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
                             <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><DollarSign size={18} /></div>
                             <input
                                 type="number"
                                 className="input-field"
                                 style={{ border: 'none', flex: 1, paddingLeft: 0 }}
-                                placeholder="Enter amount"
+                                placeholder="e.g. 50000"
                                 value={formData.principal}
                                 onChange={e => setFormData({ ...formData, principal: e.target.value })}
-                                tabIndex={1}
                                 required
                             />
                         </div>
-                    ) : (
-                        <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
-                            <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><DollarSign size={18} /></div>
-                            <select
-                                className="input-field"
-                                style={{ border: 'none', flex: 1, paddingLeft: 0, background: 'transparent' }}
-                                value={formData.principal}
-                                onChange={e => setFormData({ ...formData, principal: e.target.value })}
-                                tabIndex={1}
-                                required
-                            >
-                                {PRINCIPAL_AMOUNTS.map(amount => (
-                                    <option key={amount.value} value={amount.value}>
-                                        {amount.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-                </div>
-
-                <div className="input-group">
-                    <label className="input-label">Interest Rate (% per annum)</label>
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                        <button
-                            type="button"
-                            onClick={() => handleRateModeChange('dropdown')}
-                            className={formData.rateMode === 'dropdown' ? 'btn btn-primary' : 'btn btn-secondary'}
-                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', flex: 1 }}
-                        >
-                            Preset
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleRateModeChange('custom')}
-                            className={formData.rateMode === 'custom' ? 'btn btn-primary' : 'btn btn-secondary'}
-                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', flex: 1 }}
-                        >
-                            Custom
-                        </button>
                     </div>
 
-                    {formData.rateMode === 'dropdown' ? (
-                        <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
-                            <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><Percent size={18} /></div>
-                            <select
-                                className="input-field"
-                                style={{ border: 'none', flex: 1, paddingLeft: 0, background: 'transparent' }}
-                                value={formData.rate}
-                                onChange={e => setFormData({ ...formData, rate: e.target.value })}
-                                tabIndex={2}
-                                required
-                            >
-                                {INTEREST_RATES.map(rate => (
-                                    <option key={rate} value={rate}>{rate}%</option>
-                                ))}
-                            </select>
-                        </div>
-                    ) : (
+                    {/* Interest Rate */}
+                    <div className="input-group">
+                        <label className="input-label">Interest Rate (% per annum)</label>
                         <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
                             <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><Percent size={18} /></div>
                             <input
@@ -181,49 +124,54 @@ const EntryForm = ({ onAddLoan, existingBorrowers }) => {
                                 step="0.1"
                                 className="input-field"
                                 style={{ border: 'none', flex: 1, paddingLeft: 0 }}
-                                placeholder="Enter rate %"
+                                placeholder="e.g. 12"
                                 value={formData.rate}
                                 onChange={e => setFormData({ ...formData, rate: e.target.value })}
-                                tabIndex={2}
                                 required
                             />
                         </div>
+                    </div>
+
+                    {/* Tenure (Only for EMI) */}
+                    {formData.loanType === 'emi' && (
+                        <div className="input-group">
+                            <label className="input-label">Tenure (Months)</label>
+                            <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
+                                <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><Clock size={18} /></div>
+                                <input
+                                    type="number"
+                                    className="input-field"
+                                    style={{ border: 'none', flex: 1, paddingLeft: 0 }}
+                                    placeholder="e.g. 12"
+                                    value={formData.tenure}
+                                    onChange={e => setFormData({ ...formData, tenure: e.target.value })}
+                                    required
+                                    min="1"
+                                />
+                            </div>
+                        </div>
                     )}
-                </div>
 
-                <div className="input-group">
-                    <label className="input-label">Start Date</label>
-                    <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
-                        <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><Calendar size={18} /></div>
-                        <input
-                            type="date"
-                            className="input-field"
-                            style={{ border: 'none', flex: 1, paddingLeft: 0 }}
-                            value={formData.startDate}
-                            onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                            tabIndex={3}
-                            required
-                        />
+                    {/* Start Date */}
+                    <div className="input-group">
+                        <label className="input-label">Start Date</label>
+                        <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
+                            <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><Calendar size={18} /></div>
+                            <input
+                                type="date"
+                                className="input-field"
+                                style={{ border: 'none', flex: 1, paddingLeft: 0 }}
+                                value={formData.startDate}
+                                onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                                required
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <div className="input-group">
-                    <label className="input-label">End Date (Optional)</label>
-                    <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
-                        <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><Calendar size={18} /></div>
-                        <input
-                            type="date"
-                            className="input-field"
-                            style={{ border: 'none', flex: 1, paddingLeft: 0 }}
-                            value={formData.endDate}
-                            onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                            tabIndex={4}
-                        />
-                    </div>
-                </div>
-
-                <button type="submit" className="btn btn-primary" style={{ height: '48px' }} tabIndex={5}>
-                    <Plus size={20} /> Add Loan
+                <button type="submit" className="btn btn-primary" style={{ justifySelf: 'start' }}>
+                    <PlusCircle size={20} />
+                    Add Loan
                 </button>
             </form>
         </div>

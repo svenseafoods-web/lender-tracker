@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, ChevronRight, DollarSign, Edit2, CheckCircle, Clock, Trash2 } from 'lucide-react';
-import { calculateInterest, formatCurrency } from '../utils/calculations';
+import { calculateInterest, calculateEMI, calculateDailyCompound, formatCurrency } from '../utils/calculations';
 import InvoiceButton from './InvoiceButton';
 
 const formatDate = (dateStr) => {
@@ -18,10 +18,42 @@ const formatMonth = (dateStr) => {
     return `${month} ${year}`;
 };
 
+const getLoanDetails = (loan) => {
+    if (loan.loanType === 'emi') {
+        const emi = calculateEMI(loan.principal || loan.amount, loan.rate, loan.tenure);
+        return {
+            typeLabel: 'EMI Loan',
+            interestLabel: 'Monthly EMI',
+            interestValue: emi,
+            totalDue: emi, // For EMI, usually the due amount is the monthly installment
+            extraInfo: `${loan.tenure} Months`
+        };
+    } else if (loan.loanType === 'compound') {
+        const { interest, totalAmount, days } = calculateDailyCompound(loan.principal || loan.amount, loan.rate, loan.startDate);
+        return {
+            typeLabel: 'Daily Compound',
+            interestLabel: 'Acc. Interest',
+            interestValue: interest,
+            totalDue: totalAmount,
+            extraInfo: `${days} Days`
+        };
+    } else {
+        // Default to Simple Interest
+        const { days, interest } = calculateInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
+        return {
+            typeLabel: 'Simple Interest',
+            interestLabel: 'Interest',
+            interestValue: interest,
+            totalDue: (loan.principal || loan.amount) + interest,
+            extraInfo: `${days} Days`
+        };
+    }
+};
+
 const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
-    const { days, interest } = calculateInterest(loan.principal, loan.rate, loan.startDate, loan.endDate);
+    const { typeLabel, interestLabel, interestValue, totalDue, extraInfo } = getLoanDetails(loan);
     const isReturned = !!loan.endDate;
-    const totalDue = isReturned ? 0 : (loan.principal + interest);
+    const principal = loan.principal || loan.amount;
 
     return (
         <div style={{
@@ -33,7 +65,8 @@ const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <div style={{ fontWeight: 600 }}>{formatDate(loan.startDate)}</div>
-                <div>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span className="badge badge-secondary" style={{ fontSize: '0.7rem' }}>{typeLabel}</span>
                     {isReturned ? (
                         <span className="badge badge-info" style={{ gap: '4px' }}><CheckCircle size={12} /> Returned</span>
                     ) : (
@@ -43,10 +76,10 @@ const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                <div>Principal: <span style={{ color: 'var(--text-primary)' }}>{formatCurrency(loan.principal)}</span></div>
+                <div>Principal: <span style={{ color: 'var(--text-primary)' }}>{formatCurrency(principal)}</span></div>
                 <div>Rate: <span style={{ color: 'var(--text-primary)' }}>{loan.rate}%</span></div>
-                <div>Days: <span style={{ color: 'var(--text-primary)' }}>{days}</span></div>
-                <div>Interest: <span style={{ color: 'var(--warning)' }}>{formatCurrency(interest)}</span></div>
+                <div>Duration: <span style={{ color: 'var(--text-primary)' }}>{extraInfo}</span></div>
+                <div>{interestLabel}: <span style={{ color: 'var(--warning)' }}>{formatCurrency(interestValue)}</span></div>
             </div>
 
             {!isReturned && (
@@ -62,7 +95,7 @@ const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
                 </button>
                 {!isReturned && (
                     <button className="btn btn-primary" onClick={() => onPayInterest(loan)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', backgroundColor: 'var(--success)' }}>
-                        <DollarSign size={14} /> Pay Interest
+                        <DollarSign size={14} /> Pay
                     </button>
                 )}
                 <button className="btn btn-secondary" onClick={() => onDelete(loan)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}>
@@ -89,16 +122,17 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
         sortableLoans.sort((a, b) => {
             let aValue, bValue;
 
-            // Calculate derived values for sorting
-            if (sortConfig.key === 'days' || sortConfig.key === 'interest') {
-                const aCalc = calculateInterest(a.principal, a.rate, a.startDate, a.endDate);
-                const bCalc = calculateInterest(b.principal, b.rate, b.startDate, b.endDate);
-                aValue = aCalc[sortConfig.key];
-                bValue = bCalc[sortConfig.key];
-            } else {
-                aValue = a[sortConfig.key];
-                bValue = b[sortConfig.key];
-            }
+            // Helper to get comparable values
+            const getVal = (item, key) => {
+                if (key === 'interest' || key === 'days') {
+                    const details = getLoanDetails(item);
+                    return key === 'interest' ? details.interestValue : details.extraInfo; // Simplified sort
+                }
+                return item[key] || item.amount; // Handle principal/amount legacy
+            };
+
+            aValue = getVal(a, sortConfig.key);
+            bValue = getVal(b, sortConfig.key);
 
             if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
             if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -122,10 +156,11 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
                     <thead>
                         <tr>
                             <th onClick={() => handleSort('startDate')}><div style={thStyle}>Date <SortIcon column="startDate" /></div></th>
+                            <th>Type</th>
                             <th onClick={() => handleSort('principal')}><div style={thStyle}>Principal <SortIcon column="principal" /></div></th>
                             <th onClick={() => handleSort('rate')}><div style={thStyle}>Rate <SortIcon column="rate" /></div></th>
-                            <th onClick={() => handleSort('days')}><div style={thStyle}>Days <SortIcon column="days" /></div></th>
-                            <th onClick={() => handleSort('interest')}><div style={thStyle}>Interest <SortIcon column="interest" /></div></th>
+                            <th>Duration</th>
+                            <th>Interest / EMI</th>
                             <th>Total Due</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -133,17 +168,23 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
                     </thead>
                     <tbody>
                         {sortedLoans.map(loan => {
-                            const { days, interest } = calculateInterest(loan.principal, loan.rate, loan.startDate, loan.endDate);
+                            const { typeLabel, interestLabel, interestValue, totalDue, extraInfo } = getLoanDetails(loan);
                             const isReturned = !!loan.endDate;
-                            const totalDue = isReturned ? 0 : (loan.principal + interest);
+                            const principal = loan.principal || loan.amount;
 
                             return (
                                 <tr key={loan.id} style={{ opacity: isReturned ? 0.7 : 1 }}>
                                     <td>{formatDate(loan.startDate)}</td>
-                                    <td>{formatCurrency(loan.principal)}</td>
+                                    <td><span className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>{typeLabel}</span></td>
+                                    <td>{formatCurrency(principal)}</td>
                                     <td>{loan.rate}%</td>
-                                    <td>{days}</td>
-                                    <td style={{ color: 'var(--warning)', fontWeight: 500 }}>{formatCurrency(interest)}</td>
+                                    <td>{extraInfo}</td>
+                                    <td>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ color: 'var(--warning)', fontWeight: 500 }}>{formatCurrency(interestValue)}</span>
+                                            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{interestLabel}</span>
+                                        </div>
+                                    </td>
                                     <td style={{ fontWeight: 600 }}>{isReturned ? '-' : formatCurrency(totalDue)}</td>
                                     <td>
                                         {isReturned ? (
@@ -165,7 +206,7 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
                                             {!isReturned && (
                                                 <button
                                                     className="btn-icon"
-                                                    title="Pay Interest (Reset Date)"
+                                                    title="Pay"
                                                     onClick={() => onPayInterest(loan)}
                                                     style={{ color: 'var(--success)', cursor: 'pointer' }}
                                                 >

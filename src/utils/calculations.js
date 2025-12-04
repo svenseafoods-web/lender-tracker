@@ -5,6 +5,42 @@ export const getToday = () => {
     return now;
 };
 
+export const calculateMonthlyInterest = (principal, rate) => {
+    return (principal * rate) / 100 / 12;
+};
+
+export const calculateEMI = (principal, rate, tenureMonths) => {
+    if (!tenureMonths || tenureMonths <= 0) return 0;
+    const monthlyRate = rate / 12 / 100;
+    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths)) / (Math.pow(1 + monthlyRate, tenureMonths) - 1);
+    return emi;
+};
+
+export const calculateDailyCompound = (principal, rate, startDate) => {
+    const differenceInDays = (date2, date1) => {
+        const diffTime = Math.abs(date2.getTime() - date1.getTime());
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    const start = new Date(startDate);
+    const now = new Date();
+    const daysElapsed = differenceInDays(now, start);
+
+    // Daily rate
+    const dailyRate = rate / 100 / 365;
+
+    // Compound interest formula: A = P * (1 + r/n)^(nt)
+    // Here n=365 (daily compounding), t = days/365
+    // Simplified: A = P * (1 + dailyRate)^days
+    const amount = principal * Math.pow(1 + dailyRate, daysElapsed);
+
+    return {
+        totalAmount: amount,
+        interest: amount - principal,
+        days: daysElapsed
+    };
+};
+
 export const calculateInterest = (principal, rate, startDate, endDate = null) => {
     try {
         // Parse dates - ensure both are treated as local midnight to avoid timezone offsets
