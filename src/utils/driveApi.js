@@ -44,16 +44,6 @@ export const uploadEncryptedBackup = async (loans, userEmail, accessToken) => {
         const encryptedData = encryptData({ loans, timestamp: new Date().toISOString() }, userEmail);
 
         const blob = new Blob([encryptedData], { type: 'text/plain' });
-        const metadata = {
-            name: 'lender_tracker_secure_backup.enc',
-            mimeType: 'text/plain',
-            description: 'Encrypted backup - can only be decrypted by authorized user',
-            parents: ['appDataFolder'] // Critical for new file creation
-        };
-
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', blob);
 
         // First, try to find existing backup to update it
         const searchResponse = await fetch(
@@ -69,6 +59,26 @@ export const uploadEncryptedBackup = async (loans, userEmail, accessToken) => {
         if (searchData.files && searchData.files.length > 0) {
             fileId = searchData.files[0].id;
         }
+
+        // Create metadata - IMPORTANT: parents field only for NEW files
+        const metadata = fileId
+            ? {
+                // UPDATE: Don't include parents field
+                name: 'lender_tracker_secure_backup.enc',
+                mimeType: 'text/plain',
+                description: 'Encrypted backup - can only be decrypted by authorized user'
+            }
+            : {
+                // NEW FILE: Include parents field
+                name: 'lender_tracker_secure_backup.enc',
+                mimeType: 'text/plain',
+                description: 'Encrypted backup - can only be decrypted by authorized user',
+                parents: ['appDataFolder']
+            };
+
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', blob);
 
         // Upload or update
         const url = fileId
