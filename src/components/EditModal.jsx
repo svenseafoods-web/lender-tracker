@@ -54,6 +54,19 @@ const EditModal = ({ loan, isOpen, onClose, onSave }) => {
                     </div>
 
                     <div className="input-group">
+                        <label className="input-label">Loan Type</label>
+                        <select
+                            className="input-field"
+                            value={formData.loanType || 'simple'}
+                            onChange={e => setFormData({ ...formData, loanType: e.target.value })}
+                        >
+                            <option value="simple">Simple Interest</option>
+                            <option value="emi">EMI (Home Loan)</option>
+                            <option value="compound">Daily Compound (Line of Credit)</option>
+                        </select>
+                    </div>
+
+                    <div className="input-group">
                         <label className="input-label">Interest Rate</label>
                         <input
                             type="number"
@@ -64,6 +77,19 @@ const EditModal = ({ loan, isOpen, onClose, onSave }) => {
                             required
                         />
                     </div>
+
+                    {formData.loanType === 'emi' && (
+                        <div className="input-group">
+                            <label className="input-label">Tenure (Months)</label>
+                            <input
+                                type="number"
+                                className="input-field"
+                                value={formData.tenure || ''}
+                                onChange={e => setFormData({ ...formData, tenure: e.target.value })}
+                                required
+                            />
+                        </div>
+                    )}
 
                     <div className="input-group">
                         <label className="input-label">Start Date</label>

@@ -314,7 +314,11 @@ const LoanList = ({ loans, onEdit, onPayInterest, onDelete }) => {
                     {sortedBorrowers.map(borrower => {
                         const isExpanded = expandedBorrowers[borrower];
                         const borrowerLoans = Object.values(groupedLoans[borrower]).flat();
-                        const totalPrincipal = borrowerLoans.reduce((sum, l) => sum + (l.endDate ? 0 : l.principal), 0);
+                        const totalPrincipal = borrowerLoans.reduce((sum, l) => {
+                            if (l.endDate) return sum; // Skip returned loans
+                            const principal = l.principal || l.amount || 0;
+                            return sum + principal;
+                        }, 0);
 
                         return (
                             <div key={borrower} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>

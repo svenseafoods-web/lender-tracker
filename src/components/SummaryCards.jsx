@@ -1,18 +1,39 @@
 import React from 'react';
-import { calculateInterest, formatCurrency } from '../utils/calculations';
+import { calculateInterest, calculateEMI, calculateDailyCompound, formatCurrency } from '../utils/calculations';
 
 const SummaryCards = ({ loans }) => {
     const stats = loans.reduce((acc, loan) => {
         const isReturned = !!loan.endDate;
-        const { interest } = calculateInterest(loan.principal, loan.rate, loan.startDate, loan.endDate);
+        const principal = loan.principal || loan.amount || 0;
+        let interest = 0;
 
-        acc.totalPrincipal += loan.principal;
+        if (loan.loanType === 'emi') {
+            // For EMI, we can consider the "interest" component of the *next* EMI, 
+            // or just sum the total EMIs paid vs principal. 
+            // For summary simplicity, let's use the monthly EMI amount as "pending" for active loans
+            const emi = calculateEMI(principal, loan.rate, loan.tenure);
+            interest = emi;
+        } else if (loan.loanType === 'compound') {
+            const result = calculateDailyCompound(principal, loan.rate, loan.startDate);
+            interest = result.interest;
+        } else {
+            const result = calculateInterest(principal, loan.rate, loan.startDate, loan.endDate);
+            interest = result.interest;
+        }
+
+        // Safety check
+        if (isNaN(principal)) return acc;
+        if (isNaN(interest)) interest = 0;
+
+        acc.totalPrincipal += principal;
 
         if (!isReturned) {
-            acc.activePrincipal += loan.principal;
+            acc.activePrincipal += principal;
             acc.pendingInterest += interest;
         } else {
             // For returned loans, count the interest as earned
+            // Note: For EMI/Compound, "earned" logic might need more complex history tracking
+            // For now, we use the calculated interest at time of return
             acc.totalEarned += interest;
         }
 

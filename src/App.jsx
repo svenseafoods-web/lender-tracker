@@ -335,6 +335,7 @@ function App() {
           <EntryForm
             onAddLoan={handleAddLoan}
             existingBorrowers={existingBorrowers}
+            loans={loans}
           />
 
           <LoanList

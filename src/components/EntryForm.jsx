@@ -4,7 +4,7 @@ import BorrowerSelect from './BorrowerSelect';
 
 const INTEREST_RATES = [6, 8, 10, 12, 15, 18, 24, 36];
 
-const EntryForm = ({ onAddLoan, existingBorrowers }) => {
+const EntryForm = ({ onAddLoan, existingBorrowers, loans = [] }) => {
     const [isNewBorrower, setIsNewBorrower] = useState(false);
     const [newBorrowerName, setNewBorrowerName] = useState('');
 
@@ -72,7 +72,25 @@ const EntryForm = ({ onAddLoan, existingBorrowers }) => {
                     {/* Borrower Selection */}
                     <BorrowerSelect
                         value={formData.borrower}
-                        onChange={(val) => setFormData({ ...formData, borrower: val })}
+                        onChange={(val) => {
+                            // Auto-select loan type based on borrower's history
+                            const borrowerLoans = loans.filter(l => l.borrower === val);
+                            if (borrowerLoans.length > 0) {
+                                // Get the most recent loan
+                                const mostRecent = borrowerLoans.sort((a, b) =>
+                                    new Date(b.startDate) - new Date(a.startDate)
+                                )[0];
+
+                                setFormData({
+                                    ...formData,
+                                    borrower: val,
+                                    loanType: mostRecent.loanType || 'simple',
+                                    tenure: mostRecent.tenure || ''
+                                });
+                            } else {
+                                setFormData({ ...formData, borrower: val });
+                            }
+                        }}
                         existingBorrowers={existingBorrowers}
                         isNew={isNewBorrower}
                         onNewChange={setNewBorrowerName}
