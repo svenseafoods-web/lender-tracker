@@ -47,7 +47,8 @@ export const uploadEncryptedBackup = async (loans, userEmail, accessToken) => {
         const metadata = {
             name: 'lender_tracker_secure_backup.enc',
             mimeType: 'text/plain',
-            description: 'Encrypted backup - can only be decrypted by authorized user'
+            description: 'Encrypted backup - can only be decrypted by authorized user',
+            parents: ['appDataFolder'] // Critical for new file creation
         };
 
         const form = new FormData();
