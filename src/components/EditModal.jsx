@@ -5,7 +5,13 @@ const EditModal = ({ loan, isOpen, onClose, onSave }) => {
     const [formData, setFormData] = useState(loan || {});
 
     useEffect(() => {
-        if (loan) setFormData(loan);
+        if (loan) {
+            // Normalize the loan data - handle both 'principal' and 'amount' fields
+            setFormData({
+                ...loan,
+                principal: loan.principal || loan.amount || ''
+            });
+        }
     }, [loan]);
 
     if (!isOpen) return null;
