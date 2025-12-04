@@ -10,7 +10,7 @@ import BorrowerDashboard from './components/BorrowerDashboard';
 import { loadLoans, saveLoans, loadSession, saveSession, clearSession, downloadBackupFile, uploadBackupFile } from './utils/storage';
 import { uploadEncryptedBackup, downloadEncryptedBackup } from './utils/driveApi';
 import { ALLOWED_EMAILS } from './config';
-import { LogOut, Download, Upload, Cloud, CloudOff } from 'lucide-react';
+import { LogOut, Download, Upload, Cloud, CloudOff, CloudUpload } from 'lucide-react';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -364,7 +364,7 @@ function App() {
             <Cloud size={18} /> Restore from Cloud
           </button>
           <button onClick={handleBackupToCloud} className="btn btn-secondary" title="Backup to Google Drive">
-            <Upload size={18} /> Backup to Cloud
+            <CloudUpload size={18} /> Backup to Cloud
           </button>
           <button
             onClick={() => {
