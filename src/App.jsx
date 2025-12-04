@@ -92,6 +92,17 @@ function App() {
       setCloudSyncStatus('success');
     } catch (error) {
       console.error('Sync failed:', error);
+
+      // Check if it's a 401 error (token expired)
+      if (error.message && (error.message.includes('401') || error.message.includes('Invalid Credentials'))) {
+        console.log('Token expired during sync, logging out...');
+        setUser(null);
+        setAccessToken(null);
+        clearSession();
+        alert('⚠️ Your session has expired. Please log in again.');
+        return;
+      }
+
       setCloudSyncStatus('error');
       // Don't alert on auto-sync error to avoid annoyance, just show status icon
     }
@@ -118,6 +129,17 @@ function App() {
         setTimeout(() => setCloudSyncStatus('idle'), 3000);
       } catch (error) {
         console.error("Auto-backup failed:", error);
+
+        // Check if it's a 401 error (token expired)
+        if (error.message && error.message.includes('401')) {
+          console.log('Token expired, logging out...');
+          setUser(null);
+          setAccessToken(null);
+          clearSession();
+          alert('⚠️ Your session has expired. Please log in again to continue cloud backups.');
+          return; // Don't set error status, just logout
+        }
+
         setCloudSyncStatus('error');
         setTimeout(() => setCloudSyncStatus('idle'), 3000);
       }
