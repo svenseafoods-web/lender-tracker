@@ -11,3 +11,8 @@ export const ALLOWED_EMAILS = allowedEmailsEnv.split(',').map(email => email.tri
 
 // Scopes required for Google Drive access and user info
 export const SCOPES = "https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+
+// UPI ID for payment QR code (optional)
+// In Vercel, set VITE_UPI_ID=yourname@upi
+// For local development, create a .env file with: VITE_UPI_ID=yourname@upi
+export const UPI_ID = import.meta.env.VITE_UPI_ID || "";

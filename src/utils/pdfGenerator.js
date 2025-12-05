@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { calculateInterest, formatCurrency } from './calculations';
+import { UPI_ID } from '../config';
 
 const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
@@ -11,6 +12,14 @@ const formatDate = (dateStr) => {
     return `${day}/${month}/${year}`;
 };
 
+// Generate UPI QR code URL
+const generateUPIQRCode = (upiId, amount, name) => {
+    if (!upiId) return null;
+    const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR`;
+    // Using Google Charts API for QR code generation
+    return `https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=${encodeURIComponent(upiString)}`;
+};
+
 export const generateInvoicePDF = (borrowerName, month, loans) => {
     if (!loans || !Array.isArray(loans)) {
         throw new Error("Invalid loans data");
@@ -18,18 +27,18 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
 
     const doc = new jsPDF();
 
-    // Header
-    doc.setFontSize(20);
+    // Header - Reduced font sizes
+    doc.setFontSize(16); // Reduced from 20
     doc.setTextColor(40, 40, 40);
-    doc.text("LENDING COMPANY INVOICE", 105, 20, null, null, "center");
+    doc.text("LENDING COMPANY INVOICE", 105, 15, null, null, "center");
 
-    doc.setFontSize(12);
+    doc.setFontSize(10); // Reduced from 12
     doc.setTextColor(100, 100, 100);
-    doc.text(`Borrower: ${borrowerName || 'Unknown'}`, 14, 40);
-    doc.text(`Billing Month: ${month || 'N/A'}`, 14, 48);
+    doc.text(`Borrower: ${borrowerName || 'Unknown'}`, 14, 28);
+    doc.text(`Billing Month: ${month || 'N/A'}`, 14, 34);
 
     const today = new Date();
-    doc.text(`Date Generated: ${formatDate(today.toISOString().split('T')[0])}`, 14, 56);
+    doc.text(`Date Generated: ${formatDate(today.toISOString().split('T')[0])}`, 14, 40);
 
     // Table Data
     const tableRows = [];
@@ -83,23 +92,49 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
         throw new Error("No valid loan data found to generate invoice.");
     }
 
-    // Table
+    // Table with smaller fonts
     autoTable(doc, {
-        startY: 65,
+        startY: 50, // Adjusted for smaller header
         head: [['Date Taken', 'Date Returned', 'Principal', 'Rate', 'Days', 'Interest']],
         body: tableRows,
         theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246], halign: 'center' },
+        styles: { fontSize: 8, cellPadding: 2 }, // Reduced font size
+        headStyles: { fillColor: [59, 130, 246], halign: 'center', fontSize: 9 },
         foot: [['Total', '', formatCurrency(totalPrincipal), '', '', formatCurrency(totalInterest)]],
-        footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
+        footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 9 }
     });
 
     // Add summary section
     const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(14);
+    doc.setFontSize(11); // Reduced from 14
     doc.setTextColor(40, 40, 40);
     doc.text(`Total Interest: ${formatCurrency(totalInterest)}`, 14, finalY);
-    doc.text(`Total Amount Due (Ongoing Principal + Interest): ${formatCurrency(ongoingPrincipal + totalInterest)}`, 14, finalY + 8);
+    doc.text(`Total Amount Due (Ongoing Principal + Interest): ${formatCurrency(ongoingPrincipal + totalInterest)}`, 14, finalY + 7);
+
+    // Add UPI QR Code if UPI_ID is configured
+    if (UPI_ID) {
+        const qrCodeUrl = generateUPIQRCode(UPI_ID, ongoingPrincipal + totalInterest, 'Loan Payment');
+
+        try {
+            // Add QR code section
+            const qrY = finalY + 20;
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Scan to Pay:', 14, qrY);
+
+            // Note: QR code image would need to be loaded as base64
+            // For now, we'll add the UPI ID as text
+            doc.setFontSize(9);
+            doc.text(`UPI ID: ${UPI_ID}`, 14, qrY + 5);
+            doc.text(`Amount: ${formatCurrency(ongoingPrincipal + totalInterest)}`, 14, qrY + 10);
+
+            // Add clickable link to QR code
+            doc.setTextColor(59, 130, 246);
+            doc.textWithLink('Click here to view QR Code', 14, qrY + 15, { url: qrCodeUrl });
+        } catch (error) {
+            console.error('Error adding QR code:', error);
+        }
+    }
 
     return doc;
 };
