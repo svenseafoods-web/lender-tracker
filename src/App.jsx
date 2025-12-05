@@ -65,28 +65,56 @@ function App() {
           cloudTime: cloudTimestamp
         });
 
-        // Logic:
+        // Improved Logic to prevent data loss:
         // 1. If no local data, take cloud
-        // 2. If cloud is newer than local, take cloud
-        // 3. If local is newer, keep local (it will auto-upload soon)
+        // 2. If cloud timestamp is newer AND has more or equal loans, take cloud
+        // 3. If local has more loans than cloud (even if timestamp is older), keep local and warn user
+        // 4. If timestamps are close (within 1 minute) and local has more data, keep local
 
-        const shouldRestore =
-          localLoans.length === 0 ||
-          !localTimestamp ||
-          (cloudTimestamp && new Date(cloudTimestamp) > new Date(localTimestamp));
+        let shouldRestore = false;
+        let reason = '';
+
+        if (localLoans.length === 0) {
+          shouldRestore = true;
+          reason = 'no_local_data';
+        } else if (!localTimestamp) {
+          // No local timestamp, but we have data - this is suspicious, keep local
+          shouldRestore = false;
+          reason = 'no_local_timestamp';
+          console.log('⚠️ Local data exists but no timestamp. Keeping local data to be safe.');
+        } else if (cloudTimestamp && new Date(cloudTimestamp) > new Date(localTimestamp)) {
+          // Cloud is newer
+          if (cloudData.loans.length >= localLoans.length) {
+            // Cloud has more or equal data, safe to restore
+            shouldRestore = true;
+            reason = 'cloud_newer_and_more_data';
+          } else {
+            // Cloud is newer but has LESS data - this is the bug scenario!
+            // Keep local data and warn user
+            shouldRestore = false;
+            reason = 'cloud_newer_but_less_data';
+            console.warn('⚠️ Cloud data is newer but has fewer loans. Keeping local data to prevent loss.');
+            alert(`⚠️ Warning: Cloud backup is older (has ${cloudData.loans.length} loans vs your local ${localLoans.length} loans). Keeping your local data. Click "Backup to Cloud" to update the cloud.`);
+          }
+        } else {
+          shouldRestore = false;
+          reason = 'local_newer';
+        }
+
+        console.log(`Sync decision: ${shouldRestore ? 'RESTORE from cloud' : 'KEEP local'} (reason: ${reason})`);
 
         if (shouldRestore) {
           setLoans(cloudData.loans);
           // Update local timestamp to match cloud so we don't re-sync unnecessarily
           localStorage.setItem('lender_tracker_last_updated', cloudTimestamp || new Date().toISOString());
 
-          if (localLoans.length === 0) {
+          if (reason === 'no_local_data') {
             alert(`✅ Restored ${cloudData.loans.length} loans from cloud!`);
           } else {
             alert(`✅ Synced with cloud: Found newer data from ${new Date(cloudTimestamp).toLocaleTimeString()}`);
           }
         } else {
-          console.log('Local data is newer or same age, keeping local.');
+          console.log(`Local data preserved (${localLoans.length} loans).`);
         }
       }
       setCloudSyncStatus('success');
