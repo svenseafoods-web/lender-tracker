@@ -36,6 +36,7 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
     let totalPrincipal = 0;
     let totalInterest = 0;
     let totalDays = 0;
+    let ongoingPrincipal = 0; // Only for ongoing loans
 
     // Sort loans by Date Taken (Start Date)
     const sortedLoans = [...loans].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
@@ -56,6 +57,11 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
             totalPrincipal += principal;
             totalInterest += interest;
             totalDays += days;
+
+            // Only add to ongoing principal if loan is not returned
+            if (!loan.endDate) {
+                ongoingPrincipal += principal;
+            }
 
             const dateTaken = formatDate(loan.startDate);
             const dateReturned = loan.endDate ? formatDate(loan.endDate) : 'Ongoing';
@@ -93,7 +99,7 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
     doc.setFontSize(14);
     doc.setTextColor(40, 40, 40);
     doc.text(`Total Interest: ${formatCurrency(totalInterest)}`, 14, finalY);
-    doc.text(`Total Amount Due (Principal + Interest): ${formatCurrency(totalPrincipal + totalInterest)}`, 14, finalY + 8);
+    doc.text(`Total Amount Due (Ongoing Principal + Interest): ${formatCurrency(ongoingPrincipal + totalInterest)}`, 14, finalY + 8);
 
     return doc;
 };
