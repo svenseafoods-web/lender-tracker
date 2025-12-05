@@ -289,6 +289,20 @@ function App() {
     }
   };
 
+  const handleBulkUpdateRate = (loanIds, newRate) => {
+    setLoans(prev => prev.map(loan => {
+      if (loanIds.includes(loan.id)) {
+        return {
+          ...loan,
+          rate: newRate
+        };
+      }
+      return loan;
+    }));
+    alert(`✅ Updated interest rate to ${newRate}% for ${loanIds.length} loans!`);
+  };
+
+
 
 
   const handleAddLoan = (newLoan) => {
@@ -417,6 +431,7 @@ function App() {
           onPayInterest={handlePayInterest}
           onDelete={handleDeleteLoan}
           onBulkUpdateLoanType={handleBulkUpdateLoanType}
+          onBulkUpdateRate={handleBulkUpdateRate}
         />
       ) : (
         <>
