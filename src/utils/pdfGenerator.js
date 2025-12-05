@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import QRCode from 'qrcode';
 import { calculateInterest, formatCurrency } from './calculations';
 import { UPI_ID } from '../config';
 
@@ -12,12 +13,25 @@ const formatDate = (dateStr) => {
     return `${day}/${month}/${year}`;
 };
 
-// Generate UPI QR code URL
-const generateUPIQRCode = (upiId, amount, name) => {
+// Generate UPI QR code as data URL
+const generateUPIQRCode = async (upiId, amount, name) => {
     if (!upiId) return null;
     const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR`;
-    // Using Google Charts API for QR code generation
-    return `https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=${encodeURIComponent(upiString)}`;
+    try {
+        // Generate QR code as data URL
+        const qrDataUrl = await QRCode.toDataURL(upiString, {
+            width: 200,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        });
+        return qrDataUrl;
+    } catch (error) {
+        console.error('QR Code generation error:', error);
+        return null;
+    }
 };
 
 export const generateInvoicePDF = async (borrowerName, month, loans) => {
@@ -114,47 +128,29 @@ export const generateInvoicePDF = async (borrowerName, month, loans) => {
     // Add UPI QR Code if UPI_ID is configured
     if (UPI_ID) {
         const totalAmount = ongoingPrincipal + totalInterest;
-        const qrCodeUrl = generateUPIQRCode(UPI_ID, totalAmount, 'Loan Payment');
+        const qrCodeDataUrl = await generateUPIQRCode(UPI_ID, totalAmount, 'Loan Payment');
 
-        try {
-            const qrY = finalY + 20;
+        if (qrCodeDataUrl) {
+            try {
+                const qrY = finalY + 20;
 
-            // Add section title
-            doc.setFontSize(10);
-            doc.setTextColor(40, 40, 40);
-            doc.text('Scan to Pay:', 14, qrY);
+                // Add section title
+                doc.setFontSize(10);
+                doc.setTextColor(40, 40, 40);
+                doc.text('Scan to Pay:', 14, qrY);
 
-            // Add UPI details
-            doc.setFontSize(9);
-            doc.setTextColor(100, 100, 100);
-            doc.text(`UPI ID: ${UPI_ID}`, 14, qrY + 6);
-            doc.text(`Amount: ${formatCurrency(totalAmount)}`, 14, qrY + 12);
+                // Add UPI details
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`UPI ID: ${UPI_ID}`, 14, qrY + 6);
+                doc.text(`Amount: ${formatCurrency(totalAmount)}`, 14, qrY + 12);
 
-            // Load and add QR code image
-            await new Promise((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';
+                // Add QR code image directly from data URL
+                doc.addImage(qrCodeDataUrl, 'PNG', 14, qrY + 18, 40, 40);
 
-                img.onload = function () {
-                    try {
-                        doc.addImage(img, 'PNG', 14, qrY + 18, 40, 40);
-                        resolve();
-                    } catch (e) {
-                        console.error('Error adding QR image:', e);
-                        reject(e);
-                    }
-                };
-
-                img.onerror = function () {
-                    console.error('Failed to load QR code image');
-                    resolve(); // Continue even if QR fails
-                };
-
-                img.src = qrCodeUrl;
-            });
-
-        } catch (error) {
-            console.error('Error adding QR code:', error);
+            } catch (error) {
+                console.error('Error adding QR code:', error);
+            }
         }
     }
 
