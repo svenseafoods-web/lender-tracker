@@ -57,8 +57,15 @@ const InvoiceButton = ({ borrower, month, loans }) => {
         const totalInterest = calculateTotalInterest();
         const message = `Hi ${borrower},\n\nYour loan interest invoice for ${month} is ready.\n\n💰 Interest Amount: ₹${totalInterest.toFixed(2)}\n\n${UPI_ID ? `Pay via UPI: ${UPI_ID}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
 
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+        // Prompt user for phone number
+        const phone = prompt(`Enter ${borrower}'s WhatsApp number (with country code, e.g., 919876543210):`);
+
+        if (phone) {
+            // Remove any spaces, dashes, or plus signs
+            const cleanPhone = phone.replace(/[\s\-\+]/g, '');
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
     };
 
     const handleEmail = () => {
@@ -66,8 +73,14 @@ const InvoiceButton = ({ borrower, month, loans }) => {
         const subject = `Loan Interest Invoice - ${month}`;
         const body = `Dear ${borrower},\n\nYour loan interest invoice for ${month} is ready.\n\nInterest Amount: ₹${totalInterest.toFixed(2)}\n\n${UPI_ID ? `You can pay via UPI: ${UPI_ID}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
 
-        const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.open(mailtoUrl);
+        // Prompt user for email address
+        const email = prompt(`Enter ${borrower}'s email address:`);
+
+        if (email) {
+            // Use Gmail web compose (works in browser)
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(gmailUrl, '_blank');
+        }
     };
 
     return (
