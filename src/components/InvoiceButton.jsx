@@ -5,9 +5,9 @@ import { generateInvoicePDF } from '../utils/pdfGenerator';
 const InvoiceButton = ({ borrower, month, loans }) => {
     const [generating, setGenerating] = useState(false);
 
-    const getDocAndFilename = () => {
+    const getDocAndFilename = async () => {
         try {
-            const doc = generateInvoicePDF(borrower, month, loans);
+            const doc = await generateInvoicePDF(borrower, month, loans);
             const filename = `Invoice_${borrower}_${month.replace(' ', '_')}.pdf`;
             return { doc, filename };
         } catch (e) {
@@ -16,10 +16,10 @@ const InvoiceButton = ({ borrower, month, loans }) => {
         }
     };
 
-    const handlePrint = () => {
+    const handlePrint = async () => {
         try {
             setGenerating(true);
-            const { doc } = getDocAndFilename();
+            const { doc } = await getDocAndFilename();
             window.open(doc.output('bloburl'), '_blank');
         } catch (error) {
             alert(`Print failed: ${error.message}`);
@@ -28,10 +28,10 @@ const InvoiceButton = ({ borrower, month, loans }) => {
         }
     };
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         try {
             setGenerating(true);
-            const { doc, filename } = getDocAndFilename();
+            const { doc, filename } = await getDocAndFilename();
             doc.save(filename);
             alert(`✅ Invoice downloaded: ${filename}`);
         } catch (error) {

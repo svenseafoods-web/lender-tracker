@@ -20,7 +20,7 @@ const generateUPIQRCode = (upiId, amount, name) => {
     return `https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=${encodeURIComponent(upiString)}`;
 };
 
-export const generateInvoicePDF = (borrowerName, month, loans) => {
+export const generateInvoicePDF = async (borrowerName, month, loans) => {
     if (!loans || !Array.isArray(loans)) {
         throw new Error("Invalid loans data");
     }
@@ -113,24 +113,46 @@ export const generateInvoicePDF = (borrowerName, month, loans) => {
 
     // Add UPI QR Code if UPI_ID is configured
     if (UPI_ID) {
-        const qrCodeUrl = generateUPIQRCode(UPI_ID, ongoingPrincipal + totalInterest, 'Loan Payment');
+        const totalAmount = ongoingPrincipal + totalInterest;
+        const qrCodeUrl = generateUPIQRCode(UPI_ID, totalAmount, 'Loan Payment');
 
         try {
-            // Add QR code section
             const qrY = finalY + 20;
+
+            // Add section title
             doc.setFontSize(10);
-            doc.setTextColor(100, 100, 100);
+            doc.setTextColor(40, 40, 40);
             doc.text('Scan to Pay:', 14, qrY);
 
-            // Note: QR code image would need to be loaded as base64
-            // For now, we'll add the UPI ID as text
+            // Add UPI details
             doc.setFontSize(9);
-            doc.text(`UPI ID: ${UPI_ID}`, 14, qrY + 5);
-            doc.text(`Amount: ${formatCurrency(ongoingPrincipal + totalInterest)}`, 14, qrY + 10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`UPI ID: ${UPI_ID}`, 14, qrY + 6);
+            doc.text(`Amount: ${formatCurrency(totalAmount)}`, 14, qrY + 12);
 
-            // Add clickable link to QR code
-            doc.setTextColor(59, 130, 246);
-            doc.textWithLink('Click here to view QR Code', 14, qrY + 15, { url: qrCodeUrl });
+            // Load and add QR code image
+            await new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+
+                img.onload = function () {
+                    try {
+                        doc.addImage(img, 'PNG', 14, qrY + 18, 40, 40);
+                        resolve();
+                    } catch (e) {
+                        console.error('Error adding QR image:', e);
+                        reject(e);
+                    }
+                };
+
+                img.onerror = function () {
+                    console.error('Failed to load QR code image');
+                    resolve(); // Continue even if QR fails
+                };
+
+                img.src = qrCodeUrl;
+            });
+
         } catch (error) {
             console.error('Error adding QR code:', error);
         }
