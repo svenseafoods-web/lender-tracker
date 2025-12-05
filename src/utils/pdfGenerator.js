@@ -127,8 +127,8 @@ export const generateInvoicePDF = async (borrowerName, month, loans) => {
 
     // Add UPI QR Code if UPI_ID is configured
     if (UPI_ID) {
-        const totalAmount = ongoingPrincipal + totalInterest;
-        const qrCodeDataUrl = await generateUPIQRCode(UPI_ID, totalAmount, 'Loan Payment');
+        // QR code for interest amount only
+        const qrCodeDataUrl = await generateUPIQRCode(UPI_ID, totalInterest, 'Loan Interest Payment');
 
         if (qrCodeDataUrl) {
             try {
@@ -137,13 +137,13 @@ export const generateInvoicePDF = async (borrowerName, month, loans) => {
                 // Add section title
                 doc.setFontSize(10);
                 doc.setTextColor(40, 40, 40);
-                doc.text('Scan to Pay:', 14, qrY);
+                doc.text('Scan to Pay Interest:', 14, qrY);
 
                 // Add UPI details
                 doc.setFontSize(9);
                 doc.setTextColor(100, 100, 100);
                 doc.text(`UPI ID: ${UPI_ID}`, 14, qrY + 6);
-                doc.text(`Amount: ${formatCurrency(totalAmount)}`, 14, qrY + 12);
+                doc.text(`Interest Amount: ${formatCurrency(totalInterest)}`, 14, qrY + 12);
 
                 // Add QR code image directly from data URL
                 doc.addImage(qrCodeDataUrl, 'PNG', 14, qrY + 18, 40, 40);
