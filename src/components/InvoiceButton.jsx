@@ -51,10 +51,29 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
         }
     };
 
+    const generateMessage = () => {
+        const totalInterest = calculateTotalInterest();
+        let details = '';
+
+        loans.forEach((loan, index) => {
+            const { interestValue, extraInfo } = getLoanDetails(loan);
+            const principal = loan.principal || loan.amount;
+            const start = new Date(loan.startDate).toLocaleDateString('en-IN');
+            const end = loan.endDate ? new Date(loan.endDate).toLocaleDateString('en-IN') : 'Running';
+
+            details += `\n${index + 1}. ₹${principal} | ${start} | ${extraInfo} | Int: ₹${interestValue.toFixed(0)}`;
+        });
+
+        const upiLink = UPI_ID ? `upi://pay?pa=${UPI_ID}&pn=Lender&am=${totalInterest.toFixed(2)}&cu=INR&tn=Loan%20Interest` : '';
+
+        const message = `Hi ${borrower},\n\nLoan Interest Invoice for ${month}:\n${details}\n\n💰 *Total Interest: ₹${totalInterest.toFixed(2)}*\n\n${upiLink ? `Click to Pay via UPI:\n${upiLink}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
+
+        return { message, subject: `Loan Interest Invoice - ${month}` };
+    };
+
     const handleWhatsApp = () => {
         console.log('WhatsApp Click:', { borrower, profile: borrowerProfile });
-        const totalInterest = calculateTotalInterest();
-        const message = `Hi ${borrower},\n\nYour loan interest invoice for ${month} is ready.\n\n💰 Interest Amount: ₹${totalInterest.toFixed(2)}\n\n${UPI_ID ? `Pay via UPI: ${UPI_ID}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
+        const { message } = generateMessage();
 
         // Use profile phone if available, otherwise prompt
         let phone = borrowerProfile?.phone;
@@ -65,6 +84,7 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
         if (phone) {
             // Remove any spaces, dashes, or plus signs
             const cleanPhone = phone.replace(/[\s\-\+]/g, '');
+            // Use wa.me which is more robust
             const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
@@ -72,9 +92,7 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
 
     const handleEmail = () => {
         console.log('Email Click:', { borrower, profile: borrowerProfile });
-        const totalInterest = calculateTotalInterest();
-        const subject = `Loan Interest Invoice - ${month}`;
-        const body = `Dear ${borrower},\n\nYour loan interest invoice for ${month} is ready.\n\nInterest Amount: ₹${totalInterest.toFixed(2)}\n\n${UPI_ID ? `You can pay via UPI: ${UPI_ID}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
+        const { message, subject } = generateMessage();
 
         // Use profile email if available, otherwise prompt
         let email = borrowerProfile?.email;
@@ -84,7 +102,7 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
 
         if (email) {
             // Use Gmail web compose (works in browser)
-            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
             window.open(gmailUrl, '_blank');
         }
     };
