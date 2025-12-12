@@ -38,10 +38,10 @@ const decryptData = (encryptedData, userEmail) => {
     }
 };
 
-export const uploadEncryptedBackup = async (loans, userEmail, accessToken) => {
+export const uploadEncryptedBackup = async (loans, profiles, userEmail, accessToken) => {
     try {
         // Encrypt data using user's email
-        const encryptedData = encryptData({ loans, timestamp: new Date().toISOString() }, userEmail);
+        const encryptedData = encryptData({ loans, profiles, timestamp: new Date().toISOString() }, userEmail);
 
         const blob = new Blob([encryptedData], { type: 'text/plain' });
 

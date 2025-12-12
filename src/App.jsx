@@ -113,6 +113,11 @@ function App() {
 
         if (shouldRestore) {
           setLoans(cloudData.loans);
+          if (cloudData.profiles) {
+            setBorrowerProfiles(cloudData.profiles);
+            saveBorrowerProfiles(cloudData.profiles);
+            console.log(`✅ Restored ${cloudData.profiles.length} profiles from cloud`);
+          }
           // Update local timestamp to match cloud so we don't re-sync unnecessarily
           localStorage.setItem('lender_tracker_last_updated', cloudTimestamp || new Date().toISOString());
 
@@ -158,7 +163,7 @@ function App() {
 
       try {
         setCloudSyncStatus('syncing');
-        await uploadEncryptedBackup(loans, user.email, accessToken);
+        await uploadEncryptedBackup(loans, borrowerProfiles, user.email, accessToken);
         setCloudSyncStatus('success');
         // Update local timestamp after successful upload
         localStorage.setItem('lender_tracker_last_updated', new Date().toISOString());
@@ -260,10 +265,14 @@ function App() {
 
     try {
       setCloudSyncStatus('syncing');
-      const cloudLoans = await downloadEncryptedBackup(user.email, accessToken);
-      if (cloudLoans && cloudLoans.length > 0) {
-        setLoans(cloudLoans);
-        alert(`✅ Restored ${cloudLoans.length} loans from secure cloud backup!`);
+      const cloudData = await downloadEncryptedBackup(user.email, accessToken);
+      if (cloudData && cloudData.loans && cloudData.loans.length > 0) {
+        setLoans(cloudData.loans);
+        if (cloudData.profiles) {
+          setBorrowerProfiles(cloudData.profiles);
+          saveBorrowerProfiles(cloudData.profiles);
+        }
+        alert(`✅ Restored ${cloudData.loans.length} loans and ${cloudData.profiles ? cloudData.profiles.length : 0} profiles from secure cloud backup!`);
         setCloudSyncStatus('success');
         setTimeout(() => setCloudSyncStatus('idle'), 3000);
       } else {
@@ -285,7 +294,7 @@ function App() {
 
     try {
       setCloudSyncStatus('syncing');
-      await uploadEncryptedBackup(loans, user.email, accessToken);
+      await uploadEncryptedBackup(loans, borrowerProfiles, user.email, accessToken);
       localStorage.setItem('lender_tracker_last_updated', new Date().toISOString());
       setCloudSyncStatus('success');
       alert(`✅ Successfully backed up ${loans.length} loans to Google Drive!`);
