@@ -60,19 +60,12 @@ const getLoanDetails = (loan) => {
     }
 };
 
-const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
+const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete, borrowerProfile }) => {
     const { typeLabel, interestLabel, interestValue, totalDue, extraInfo } = getLoanDetails(loan);
     const isReturned = !!loan.endDate;
     const principal = loan.principal || loan.amount;
 
-    const handlePrint = async () => {
-        try {
-            const doc = await generateInvoicePDF(loan.borrower, formatMonth(loan.startDate), [loan]);
-            window.open(doc.output('bloburl'), '_blank');
-        } catch (error) {
-            alert('Failed to generate invoice: ' + error.message);
-        }
-    };
+    const principal = loan.principal || loan.amount;
 
     return (
         <div style={{
@@ -109,9 +102,13 @@ const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
             )}
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
-                <button className="btn btn-secondary" onClick={handlePrint} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} title="Print Invoice">
-                    <Printer size={14} />
-                </button>
+                <InvoiceButton
+                    borrower={loan.borrower}
+                    month={formatMonth(loan.startDate)}
+                    loans={[loan]}
+                    borrowerProfile={borrowerProfile}
+                    compact={true}
+                />
                 <button className="btn btn-secondary" onClick={() => onEdit(loan)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
                     <Edit2 size={14} /> Edit
                 </button>
@@ -128,7 +125,7 @@ const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
     );
 };
 
-const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
+const LoanTable = ({ loans, onEdit, onPayInterest, onDelete, borrowerProfiles = [] }) => {
     const [sortConfig, setSortConfig] = useState({ key: 'startDate', direction: 'asc' });
 
     const handleSort = (key) => {
@@ -217,21 +214,13 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
                                     </td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <button
-                                                className="btn-icon"
-                                                title="Print Invoice"
-                                                onClick={async () => {
-                                                    try {
-                                                        const doc = await generateInvoicePDF(loan.borrower, formatMonth(loan.startDate), [loan]);
-                                                        window.open(doc.output('bloburl'), '_blank');
-                                                    } catch (error) {
-                                                        alert('Failed to generate invoice: ' + error.message);
-                                                    }
-                                                }}
-                                                style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}
-                                            >
-                                                <Printer size={16} />
-                                            </button>
+                                            <InvoiceButton
+                                                borrower={loan.borrower}
+                                                month={formatMonth(loan.startDate)}
+                                                loans={[loan]}
+                                                borrowerProfile={borrowerProfiles.find(p => p.name === loan.borrower)}
+                                                compact={true}
+                                            />
                                             <button
                                                 className="btn-icon"
                                                 title="Edit Loan"
@@ -294,6 +283,7 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
                         onEdit={onEdit}
                         onPayInterest={onPayInterest}
                         onDelete={onDelete}
+                        borrowerProfile={borrowerProfiles.find(p => p.name === loan.borrower)}
                     />
                 ))}
             </div>
@@ -301,7 +291,7 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
     );
 };
 
-const LoanList = ({ loans, onEdit, onPayInterest, onDelete }) => {
+const LoanList = ({ loans, onEdit, onPayInterest, onDelete, borrowerProfiles = [] }) => {
     const [expandedBorrowers, setExpandedBorrowers] = useState({});
     const [expandedMonths, setExpandedMonths] = useState({});
 
@@ -412,6 +402,7 @@ const LoanList = ({ loans, onEdit, onPayInterest, onDelete }) => {
                                                             borrower={borrower}
                                                             month={month}
                                                             loans={monthLoans}
+                                                            borrowerProfile={borrowerProfiles.find(p => p.name === borrower)}
                                                         />
                                                     </div>
 
@@ -422,6 +413,7 @@ const LoanList = ({ loans, onEdit, onPayInterest, onDelete }) => {
                                                                 onEdit={onEdit}
                                                                 onPayInterest={onPayInterest}
                                                                 onDelete={handleDelete}
+                                                                borrowerProfiles={borrowerProfiles}
                                                             />
                                                         </div>
                                                     )}

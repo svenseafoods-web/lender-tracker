@@ -3,7 +3,7 @@ import { Printer, MessageCircle, Mail } from 'lucide-react';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { UPI_ID } from '../config';
 
-const InvoiceButton = ({ borrower, month, loans, borrowerProfile }) => {
+const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = false }) => {
     const [generating, setGenerating] = useState(false);
 
     const getDocAndFilename = async () => {
@@ -88,6 +88,38 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile }) => {
             window.open(gmailUrl, '_blank');
         }
     };
+
+    if (compact) {
+        return (
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                <button
+                    onClick={handlePrint}
+                    disabled={generating}
+                    className="btn-icon"
+                    style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.25rem' }}
+                    title="Print Invoice"
+                >
+                    <Printer size={16} />
+                </button>
+                <button
+                    onClick={handleWhatsApp}
+                    className="btn-icon"
+                    style={{ color: '#25D366', cursor: 'pointer', padding: '0.25rem' }}
+                    title="Send via WhatsApp"
+                >
+                    <MessageCircle size={16} />
+                </button>
+                <button
+                    onClick={handleEmail}
+                    className="btn-icon"
+                    style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.25rem' }}
+                    title="Send via Email"
+                >
+                    <Mail size={16} />
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>

@@ -482,6 +482,7 @@ function App() {
 
           <LoanList
             loans={loans}
+            borrowerProfiles={borrowerProfiles}
             onEdit={handleEditLoan}
             onPayInterest={handlePayInterest}
             onDelete={handleDeleteLoan}
