@@ -128,6 +128,15 @@ function App() {
           }
         } else {
           console.log(`Local data preserved (${localLoans.length} loans).`);
+
+          // If local profiles are empty but cloud has profiles, restore them!
+          // This fixes the issue where profiles are lost but loans are kept.
+          if (borrowerProfiles.length === 0 && cloudData.profiles && cloudData.profiles.length > 0) {
+            console.log('Restoring profiles from cloud (even though loans are kept local)');
+            setBorrowerProfiles(cloudData.profiles);
+            saveBorrowerProfiles(cloudData.profiles);
+            alert(`✅ Restored ${cloudData.profiles.length} profiles from cloud (kept local loans).`);
+          }
         }
       }
       setCloudSyncStatus('success');
