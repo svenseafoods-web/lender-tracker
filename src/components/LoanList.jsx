@@ -102,6 +102,7 @@ const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete, borrowerProfile
             )}
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
+
                 <InvoiceButton
                     borrower={loan.borrower}
                     month={formatMonth(loan.startDate)}
@@ -218,7 +219,7 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete, borrowerProfiles = 
                                                 borrower={loan.borrower}
                                                 month={formatMonth(loan.startDate)}
                                                 loans={[loan]}
-                                                borrowerProfile={borrowerProfiles.find(p => p.name === loan.borrower)}
+                                                borrowerProfile={borrowerProfiles.find(p => p.name.toLowerCase().trim() === loan.borrower.toLowerCase().trim())}
                                                 compact={true}
                                             />
                                             <button
@@ -283,7 +284,7 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete, borrowerProfiles = 
                         onEdit={onEdit}
                         onPayInterest={onPayInterest}
                         onDelete={onDelete}
-                        borrowerProfile={borrowerProfiles.find(p => p.name === loan.borrower)}
+                        borrowerProfile={borrowerProfiles.find(p => p.name.toLowerCase().trim() === loan.borrower.toLowerCase().trim())}
                     />
                 ))}
             </div>
@@ -402,7 +403,7 @@ const LoanList = ({ loans, onEdit, onPayInterest, onDelete, borrowerProfiles = [
                                                             borrower={borrower}
                                                             month={month}
                                                             loans={monthLoans}
-                                                            borrowerProfile={borrowerProfiles.find(p => p.name === borrower)}
+                                                            borrowerProfile={borrowerProfiles.find(p => p.name.toLowerCase().trim() === borrower.toLowerCase().trim())}
                                                         />
                                                     </div>
 

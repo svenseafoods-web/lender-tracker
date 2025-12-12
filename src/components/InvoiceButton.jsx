@@ -54,6 +54,7 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
     };
 
     const handleWhatsApp = () => {
+        console.log('WhatsApp Click:', { borrower, profile: borrowerProfile });
         const totalInterest = calculateTotalInterest();
         const message = `Hi ${borrower},\n\nYour loan interest invoice for ${month} is ready.\n\n💰 Interest Amount: ₹${totalInterest.toFixed(2)}\n\n${UPI_ID ? `Pay via UPI: ${UPI_ID}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
 
@@ -72,6 +73,7 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
     };
 
     const handleEmail = () => {
+        console.log('Email Click:', { borrower, profile: borrowerProfile });
         const totalInterest = calculateTotalInterest();
         const subject = `Loan Interest Invoice - ${month}`;
         const body = `Dear ${borrower},\n\nYour loan interest invoice for ${month} is ready.\n\nInterest Amount: ₹${totalInterest.toFixed(2)}\n\n${UPI_ID ? `You can pay via UPI: ${UPI_ID}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
