@@ -3,7 +3,7 @@ import { Printer, MessageCircle, Mail } from 'lucide-react';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { UPI_ID } from '../config';
 
-const InvoiceButton = ({ borrower, month, loans }) => {
+const InvoiceButton = ({ borrower, month, loans, borrowerProfile }) => {
     const [generating, setGenerating] = useState(false);
 
     const getDocAndFilename = async () => {
@@ -57,8 +57,11 @@ const InvoiceButton = ({ borrower, month, loans }) => {
         const totalInterest = calculateTotalInterest();
         const message = `Hi ${borrower},\n\nYour loan interest invoice for ${month} is ready.\n\n💰 Interest Amount: ₹${totalInterest.toFixed(2)}\n\n${UPI_ID ? `Pay via UPI: ${UPI_ID}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
 
-        // Prompt user for phone number
-        const phone = prompt(`Enter ${borrower}'s WhatsApp number (with country code, e.g., 919876543210):`);
+        // Use profile phone if available, otherwise prompt
+        let phone = borrowerProfile?.phone;
+        if (!phone) {
+            phone = prompt(`Enter ${borrower}'s WhatsApp number (with country code, e.g., 919876543210):`);
+        }
 
         if (phone) {
             // Remove any spaces, dashes, or plus signs
@@ -73,8 +76,11 @@ const InvoiceButton = ({ borrower, month, loans }) => {
         const subject = `Loan Interest Invoice - ${month}`;
         const body = `Dear ${borrower},\n\nYour loan interest invoice for ${month} is ready.\n\nInterest Amount: ₹${totalInterest.toFixed(2)}\n\n${UPI_ID ? `You can pay via UPI: ${UPI_ID}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
 
-        // Prompt user for email address
-        const email = prompt(`Enter ${borrower}'s email address:`);
+        // Use profile email if available, otherwise prompt
+        let email = borrowerProfile?.email;
+        if (!email) {
+            email = prompt(`Enter ${borrower}'s email address:`);
+        }
 
         if (email) {
             // Use Gmail web compose (works in browser)

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, DollarSign, Edit2, CheckCircle, Clock, Trash2 } from 'lucide-react';
-import { calculateInterest, calculateEMI, calculateDailyCompound, formatCurrency } from '../utils/calculations';
+import { ChevronDown, ChevronRight, DollarSign, Edit2, CheckCircle, Clock, Trash2, Printer } from 'lucide-react';
+import { calculateInterest, calculateEMI, calculateDailyCompound, calculateDailySimpleInterest, formatCurrency } from '../utils/calculations';
 import InvoiceButton from './InvoiceButton';
+import { generateInvoicePDF } from '../utils/pdfGenerator';
 
 const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -37,23 +38,44 @@ const getLoanDetails = (loan) => {
             totalDue: totalAmount,
             extraInfo: `${days} Days`
         };
-    } else {
-        // Default to Simple Interest
-        const { days, interest } = calculateInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
-        return {
-            typeLabel: 'Simple Interest',
-            interestLabel: 'Interest',
-            interestValue: interest,
-            totalDue: (loan.principal || loan.amount) + interest,
+        totalDue: totalAmount,
             extraInfo: `${days} Days`
-        };
-    }
+    };
+} else if (loan.loanType === 'daily') {
+    const { interest, totalAmount, days } = calculateDailySimpleInterest(loan.principal || loan.amount, loan.rate, loan.startDate);
+    return {
+        typeLabel: 'Daily Interest',
+        interestLabel: 'Interest',
+        interestValue: interest,
+        totalDue: totalAmount,
+        extraInfo: `${days} Days`
+    };
+} else {
+    // Default to Simple Interest
+    const { days, interest } = calculateInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
+    return {
+        typeLabel: 'Simple Interest',
+        interestLabel: 'Interest',
+        interestValue: interest,
+        totalDue: (loan.principal || loan.amount) + interest,
+        extraInfo: `${days} Days`
+    };
+}
 };
 
 const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
     const { typeLabel, interestLabel, interestValue, totalDue, extraInfo } = getLoanDetails(loan);
     const isReturned = !!loan.endDate;
     const principal = loan.principal || loan.amount;
+
+    const handlePrint = async () => {
+        try {
+            const doc = await generateInvoicePDF(loan.borrower, formatMonth(loan.startDate), [loan]);
+            window.open(doc.output('bloburl'), '_blank');
+        } catch (error) {
+            alert('Failed to generate invoice: ' + error.message);
+        }
+    };
 
     return (
         <div style={{
@@ -90,6 +112,9 @@ const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
             )}
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
+                <button className="btn btn-secondary" onClick={handlePrint} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} title="Print Invoice">
+                    <Printer size={14} />
+                </button>
                 <button className="btn btn-secondary" onClick={() => onEdit(loan)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
                     <Edit2 size={14} /> Edit
                 </button>
@@ -195,6 +220,21 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete }) => {
                                     </td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button
+                                                className="btn-icon"
+                                                title="Print Invoice"
+                                                onClick={async () => {
+                                                    try {
+                                                        const doc = await generateInvoicePDF(loan.borrower, formatMonth(loan.startDate), [loan]);
+                                                        window.open(doc.output('bloburl'), '_blank');
+                                                    } catch (error) {
+                                                        alert('Failed to generate invoice: ' + error.message);
+                                                    }
+                                                }}
+                                                style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                            >
+                                                <Printer size={16} />
+                                            </button>
                                             <button
                                                 className="btn-icon"
                                                 title="Edit Loan"

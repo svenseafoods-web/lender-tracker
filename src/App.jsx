@@ -7,7 +7,8 @@ import EditModal from './components/EditModal';
 import Login from './components/Login';
 import SingleLoanView from './components/SingleLoanView';
 import BorrowerDashboard from './components/BorrowerDashboard';
-import { loadLoans, saveLoans, loadSession, saveSession, clearSession, downloadBackupFile, uploadBackupFile } from './utils/storage';
+import BorrowerProfileModal from './components/BorrowerProfileModal';
+import { loadLoans, saveLoans, loadSession, saveSession, clearSession, downloadBackupFile, uploadBackupFile, loadBorrowerProfiles, saveBorrowerProfile, deleteBorrowerProfile } from './utils/storage';
 import { uploadEncryptedBackup, downloadEncryptedBackup } from './utils/driveApi';
 import { ALLOWED_EMAILS } from './config';
 import { LogOut, Download, Upload, Cloud, CloudOff, CloudUpload } from 'lucide-react';
@@ -21,11 +22,18 @@ function App() {
   const [tick, setTick] = useState(0);
   const [cloudSyncStatus, setCloudSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
   const [selectedBorrower, setSelectedBorrower] = useState('');
+  const [borrowerProfiles, setBorrowerProfiles] = useState([]);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(null);
 
   // Load initial data and restore session
   useEffect(() => {
     const loaded = loadLoans();
     setLoans(loaded);
+
+    // Load borrower profiles
+    const profiles = loadBorrowerProfiles();
+    setBorrowerProfiles(profiles);
 
     // Restore session if available
     const session = loadSession();
@@ -302,6 +310,32 @@ function App() {
     alert(`✅ Updated interest rate to ${newRate}% for ${loanIds.length} loans!`);
   };
 
+  // Borrower Profile Handlers
+  const handleSaveProfile = (profile) => {
+    saveBorrowerProfile(profile);
+    const updated = loadBorrowerProfiles();
+    setBorrowerProfiles(updated);
+    alert(`✅ Profile saved for ${profile.name}`);
+  };
+
+  const handleDeleteProfile = (borrowerName) => {
+    deleteBorrowerProfile(borrowerName);
+    const updated = loadBorrowerProfiles();
+    setBorrowerProfiles(updated);
+    alert(`✅ Profile deleted for ${borrowerName}`);
+  };
+
+  const handleOpenProfileModal = (borrowerName = null) => {
+    if (borrowerName) {
+      const profile = borrowerProfiles.find(p => p.name === borrowerName);
+      setEditingProfile(profile || { name: borrowerName, email: '', phone: '', documents: [] });
+    } else {
+      setEditingProfile(null);
+    }
+    setShowProfileModal(true);
+  };
+
+
 
 
 
@@ -408,6 +442,9 @@ function App() {
           <button onClick={handleBackupToCloud} className="btn btn-secondary" title="Backup to Google Drive">
             <CloudUpload size={18} /> Backup to Cloud
           </button>
+          <button onClick={() => handleOpenProfileModal()} className="btn btn-primary" title="Manage Borrower Profiles">
+            👥 Manage Borrowers
+          </button>
           <button
             onClick={() => {
               setUser(null);
@@ -457,6 +494,14 @@ function App() {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveEdit}
+      />
+
+      <BorrowerProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        profile={editingProfile}
+        onSave={handleSaveProfile}
+        onDelete={handleDeleteProfile}
       />
 
       <footer style={{ marginTop: '4rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>

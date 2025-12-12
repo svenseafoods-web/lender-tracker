@@ -47,6 +47,30 @@ export const calculateDailyCompound = (principal, rate, startDate) => {
     };
 };
 
+export const calculateDailySimpleInterest = (principal, rate, startDate) => {
+    if (!principal || isNaN(principal) || !rate || isNaN(rate) || !startDate) {
+        return { totalAmount: 0, interest: 0, days: 0 };
+    }
+
+    const start = new Date(startDate);
+    if (isNaN(start.getTime())) return { totalAmount: 0, interest: 0, days: 0 };
+    const now = new Date();
+
+    // Calculate days difference
+    const diffTime = Math.abs(now.getTime() - start.getTime());
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Simple Interest with Daily Rate
+    // Formula: P * (R/100) * Days
+    const interest = principal * (rate / 100) * days;
+
+    return {
+        totalAmount: principal + interest,
+        interest: interest,
+        days: days
+    };
+};
+
 export const calculateInterest = (principal, rate, startDate, endDate = null) => {
     try {
         // Parse dates - ensure both are treated as local midnight to avoid timezone offsets

@@ -170,3 +170,52 @@ export const uploadBackupFile = () => {
         input.click();
     });
 };
+
+// BORROWER PROFILES
+const PROFILES_KEY = 'lender_tracker_borrower_profiles';
+
+export const loadBorrowerProfiles = () => {
+    try {
+        const data = localStorage.getItem(PROFILES_KEY);
+        const profiles = data ? JSON.parse(data) : [];
+        debugLog('PROFILES LOAD', `Found ${profiles.length} profiles`);
+        return profiles;
+    } catch (error) {
+        console.error("Failed to load borrower profiles:", error);
+        return [];
+    }
+};
+
+export const saveBorrowerProfiles = (profiles) => {
+    try {
+        localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+        debugLog('PROFILES SAVE', `Saved ${profiles.length} profiles`);
+    } catch (error) {
+        console.error("Failed to save borrower profiles:", error);
+    }
+};
+
+export const getBorrowerProfile = (borrowerName) => {
+    const profiles = loadBorrowerProfiles();
+    return profiles.find(p => p.name === borrowerName);
+};
+
+export const saveBorrowerProfile = (profile) => {
+    const profiles = loadBorrowerProfiles();
+    const index = profiles.findIndex(p => p.name === profile.name);
+
+    if (index >= 0) {
+        profiles[index] = profile;
+    } else {
+        profiles.push(profile);
+    }
+
+    saveBorrowerProfiles(profiles);
+    return profile;
+};
+
+export const deleteBorrowerProfile = (borrowerName) => {
+    const profiles = loadBorrowerProfiles();
+    const filtered = profiles.filter(p => p.name !== borrowerName);
+    saveBorrowerProfiles(filtered);
+};
