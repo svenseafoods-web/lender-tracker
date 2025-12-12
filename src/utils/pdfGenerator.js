@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
-import { calculateInterest, formatCurrency } from './calculations';
+import { calculateInterest, formatCurrency, getLoanDetails } from './calculations';
 import { UPI_ID } from '../config';
 
 const formatDate = (dateStr) => {
@@ -70,16 +70,12 @@ export const generateInvoicePDF = async (borrowerName, month, loans) => {
 
             const principal = Number(loan.principal || loan.amount) || 0;
 
-            const { days, interest } = calculateInterest(
-                principal,
-                Number(loan.rate) || 0,
-                loan.startDate,
-                loan.endDate
-            );
+            const { interestValue, extraInfo } = getLoanDetails(loan);
 
             totalPrincipal += principal;
-            totalInterest += interest;
-            totalDays += days;
+            totalInterest += interestValue;
+            // totalDays is less relevant for mixed types, but we can try to parse it or just omit totalDays from summary if needed.
+            // For now, let's just not add to totalDays if it's not simple/daily.
 
             // Only add to ongoing principal if loan is not returned
             if (!loan.endDate) {
@@ -94,8 +90,8 @@ export const generateInvoicePDF = async (borrowerName, month, loans) => {
                 dateReturned,
                 formatCurrency(principal),
                 `${loan.rate}%`,
-                days,
-                formatCurrency(interest)
+                extraInfo,
+                formatCurrency(interestValue)
             ]);
         } catch (err) {
             console.error(`Error processing loan at index ${index}:`, err);
