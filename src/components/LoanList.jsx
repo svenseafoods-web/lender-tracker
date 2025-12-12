@@ -37,30 +37,29 @@ const getLoanDetails = (loan) => {
             interestValue: interest,
             totalDue: totalAmount,
             extraInfo: `${days} Days`
-        };
-        totalDue: totalAmount,
+            totalDue: totalAmount,
             extraInfo: `${days} Days`
-    };
-} else if (loan.loanType === 'daily') {
-    const { interest, totalAmount, days } = calculateDailySimpleInterest(loan.principal || loan.amount, loan.rate, loan.startDate);
-    return {
-        typeLabel: 'Daily Interest',
-        interestLabel: 'Interest',
-        interestValue: interest,
-        totalDue: totalAmount,
-        extraInfo: `${days} Days`
-    };
-} else {
-    // Default to Simple Interest
-    const { days, interest } = calculateInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
-    return {
-        typeLabel: 'Simple Interest',
-        interestLabel: 'Interest',
-        interestValue: interest,
-        totalDue: (loan.principal || loan.amount) + interest,
-        extraInfo: `${days} Days`
-    };
-}
+        };
+    } else if (loan.loanType === 'daily') {
+        const { interest, totalAmount, days } = calculateDailySimpleInterest(loan.principal || loan.amount, loan.rate, loan.startDate);
+        return {
+            typeLabel: 'Daily Interest',
+            interestLabel: 'Interest',
+            interestValue: interest,
+            totalDue: totalAmount,
+            extraInfo: `${days} Days`
+        };
+    } else {
+        // Default to Simple Interest
+        const { days, interest } = calculateInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
+        return {
+            typeLabel: 'Simple Interest',
+            interestLabel: 'Interest',
+            interestValue: interest,
+            totalDue: (loan.principal || loan.amount) + interest,
+            extraInfo: `${days} Days`
+        };
+    }
 };
 
 const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete }) => {
