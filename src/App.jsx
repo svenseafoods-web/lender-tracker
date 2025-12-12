@@ -502,6 +502,7 @@ function App() {
         onClose={() => setShowProfileModal(false)}
         profile={editingProfile}
         existingBorrowers={existingBorrowers}
+        borrowerProfiles={borrowerProfiles}
         onSave={handleSaveProfile}
         onDelete={handleDeleteProfile}
       />

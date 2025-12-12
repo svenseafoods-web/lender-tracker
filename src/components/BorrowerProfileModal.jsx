@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Trash2, Upload, FileText, Download } from 'lucide-react';
 
-const BorrowerProfileModal = ({ isOpen, onClose, profile, existingBorrowers = [], onSave, onDelete }) => {
+const BorrowerProfileModal = ({ isOpen, onClose, profile, existingBorrowers = [], borrowerProfiles = [], onSave, onDelete }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -53,7 +53,16 @@ const BorrowerProfileModal = ({ isOpen, onClose, profile, existingBorrowers = []
                             type="text"
                             className="input-field"
                             value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            onChange={e => {
+                                const newName = e.target.value;
+                                setFormData(prev => {
+                                    const existing = borrowerProfiles.find(p => p.name === newName);
+                                    if (existing) {
+                                        return { ...prev, name: newName, email: existing.email || '', phone: existing.phone || '', documents: existing.documents || [] };
+                                    }
+                                    return { ...prev, name: newName };
+                                });
+                            }}
                             placeholder="John Doe"
                             required
                             disabled={!!profile} // Can't change name if editing
