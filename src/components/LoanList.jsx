@@ -37,8 +37,6 @@ const getLoanDetails = (loan) => {
             interestValue: interest,
             totalDue: totalAmount,
             extraInfo: `${days} Days`
-            totalDue: totalAmount,
-            extraInfo: `${days} Days`
         };
     } else if (loan.loanType === 'daily') {
         const { interest, totalAmount, days } = calculateDailySimpleInterest(loan.principal || loan.amount, loan.rate, loan.startDate);
