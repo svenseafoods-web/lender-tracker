@@ -500,6 +500,7 @@ function App() {
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
         profile={editingProfile}
+        existingBorrowers={existingBorrowers}
         onSave={handleSaveProfile}
         onDelete={handleDeleteProfile}
       />

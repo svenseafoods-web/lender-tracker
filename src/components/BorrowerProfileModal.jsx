@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Trash2, Upload, FileText, Download } from 'lucide-react';
 
-const BorrowerProfileModal = ({ isOpen, onClose, profile, onSave, onDelete }) => {
+const BorrowerProfileModal = ({ isOpen, onClose, profile, existingBorrowers = [], onSave, onDelete }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -57,7 +57,13 @@ const BorrowerProfileModal = ({ isOpen, onClose, profile, onSave, onDelete }) =>
                             placeholder="John Doe"
                             required
                             disabled={!!profile} // Can't change name if editing
+                            list="borrower-names"
                         />
+                        <datalist id="borrower-names">
+                            {existingBorrowers.map(name => (
+                                <option key={name} value={name} />
+                            ))}
+                        </datalist>
                     </div>
 
                     <div className="input-group">
