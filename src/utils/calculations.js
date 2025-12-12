@@ -17,7 +17,7 @@ export const calculateEMI = (principal, rate, tenureMonths) => {
     return isNaN(emi) ? 0 : emi;
 };
 
-export const calculateDailyCompound = (principal, rate, startDate) => {
+export const calculateDailyCompound = (principal, rate, startDate, endDate = null) => {
     if (!principal || isNaN(principal) || !rate || isNaN(rate) || !startDate) {
         return { totalAmount: 0, interest: 0, days: 0 };
     }
@@ -29,8 +29,13 @@ export const calculateDailyCompound = (principal, rate, startDate) => {
 
     const start = new Date(startDate);
     if (isNaN(start.getTime())) return { totalAmount: 0, interest: 0, days: 0 };
-    const now = new Date();
-    const daysElapsed = differenceInDays(now, start);
+
+    // Use endDate if provided, otherwise use today
+    const end = endDate ? new Date(endDate) : new Date();
+    // Ensure end date is at least start date
+    if (end < start) end.setTime(start.getTime());
+
+    const daysElapsed = differenceInDays(end, start);
 
     // Daily rate
     const dailyRate = rate / 100 / 365;
@@ -47,17 +52,21 @@ export const calculateDailyCompound = (principal, rate, startDate) => {
     };
 };
 
-export const calculateDailySimpleInterest = (principal, rate, startDate) => {
+export const calculateDailySimpleInterest = (principal, rate, startDate, endDate = null) => {
     if (!principal || isNaN(principal) || !rate || isNaN(rate) || !startDate) {
         return { totalAmount: 0, interest: 0, days: 0 };
     }
 
     const start = new Date(startDate);
     if (isNaN(start.getTime())) return { totalAmount: 0, interest: 0, days: 0 };
-    const now = new Date();
+
+    // Use endDate if provided, otherwise use today
+    const end = endDate ? new Date(endDate) : new Date();
+    // Ensure end date is at least start date
+    if (end < start) end.setTime(start.getTime());
 
     // Calculate days difference
-    const diffTime = Math.abs(now.getTime() - start.getTime());
+    const diffTime = Math.abs(end.getTime() - start.getTime());
     const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     // Simple Interest with Daily Rate

@@ -30,7 +30,7 @@ const getLoanDetails = (loan) => {
             extraInfo: `${loan.tenure} Months`
         };
     } else if (loan.loanType === 'compound') {
-        const { interest, totalAmount, days } = calculateDailyCompound(loan.principal || loan.amount, loan.rate, loan.startDate);
+        const { interest, totalAmount, days } = calculateDailyCompound(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
         return {
             typeLabel: 'Daily Compound',
             interestLabel: 'Acc. Interest',
@@ -39,7 +39,7 @@ const getLoanDetails = (loan) => {
             extraInfo: `${days} Days`
         };
     } else if (loan.loanType === 'daily') {
-        const { interest, totalAmount, days } = calculateDailySimpleInterest(loan.principal || loan.amount, loan.rate, loan.startDate);
+        const { interest, totalAmount, days } = calculateDailySimpleInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
         return {
             typeLabel: 'Daily Interest',
             interestLabel: 'Interest',
