@@ -65,7 +65,7 @@ const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete, borrowerProfile
     const isReturned = !!loan.endDate;
     const principal = loan.principal || loan.amount;
 
-    const principal = loan.principal || loan.amount;
+
 
     return (
         <div style={{
