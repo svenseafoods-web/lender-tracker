@@ -97,9 +97,10 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
             }
         }
 
-        const upiLink = payeeVpa ? `upi://pay?pa=${payeeVpa}&pn=Lender&am=${totalInterest.toFixed(2)}&cu=INR&tn=Loan%20Interest` : '';
+        const baseUrl = window.location.origin;
+        const paymentUrl = payeeVpa ? `${baseUrl}/pay?pa=${payeeVpa}&pn=Lender&am=${totalInterest.toFixed(2)}&tn=Loan%20Interest` : '';
 
-        const message = `Hi ${borrower},\n\nLoan Interest Invoice for ${month}:\n${details}\n💰 *Total Interest: ₹${totalInterest.toFixed(2)}*\n\n${upiLink ? `Click to Pay via UPI:\n${upiLink}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
+        const message = `Hi ${borrower},\n\nLoan Interest Invoice for ${month}:\n${details}\n💰 *Total Interest: ₹${totalInterest.toFixed(2)}*\n\n${paymentUrl ? `Click to Pay (QR & UPI):\n${paymentUrl}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
 
         return { message, subject: `Loan Interest Invoice - ${month}` };
     };
