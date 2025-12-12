@@ -35,7 +35,7 @@ export const calculateDailyCompound = (principal, rate, startDate, endDate = nul
     // Ensure end date is at least start date
     if (end < start) end.setTime(start.getTime());
 
-    const daysElapsed = differenceInDays(end, start);
+    const daysElapsed = differenceInDays(end, start) + 1;
 
     // Daily rate
     const dailyRate = rate / 100 / 365;
@@ -67,7 +67,9 @@ export const calculateDailySimpleInterest = (principal, rate, startDate, endDate
 
     // Calculate days difference
     const diffTime = Math.abs(end.getTime() - start.getTime());
-    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    // Simple Interest with Daily Rate
 
     // Simple Interest with Daily Rate
     // Formula: P * (R/100) * Days
