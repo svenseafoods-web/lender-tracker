@@ -98,7 +98,7 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
                     onClick={handlePrint}
                     disabled={generating}
                     className="btn-icon"
-                    style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.25rem' }}
+                    style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.4rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
                     title="Print Invoice"
                 >
                     <Printer size={16} />
@@ -106,7 +106,7 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
                 <button
                     onClick={handleWhatsApp}
                     className="btn-icon"
-                    style={{ color: '#25D366', cursor: 'pointer', padding: '0.25rem' }}
+                    style={{ color: '#25D366', cursor: 'pointer', padding: '0.4rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
                     title="Send via WhatsApp"
                 >
                     <MessageCircle size={16} />
@@ -114,7 +114,7 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
                 <button
                     onClick={handleEmail}
                     className="btn-icon"
-                    style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.25rem' }}
+                    style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.4rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
                     title="Send via Email"
                 >
                     <Mail size={16} />

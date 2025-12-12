@@ -293,6 +293,7 @@ const LoanTable = ({ loans, onEdit, onPayInterest, onDelete, borrowerProfiles = 
 };
 
 const LoanList = ({ loans, onEdit, onPayInterest, onDelete, borrowerProfiles = [] }) => {
+    console.log('LoanList Render - Profiles:', borrowerProfiles);
     const [expandedBorrowers, setExpandedBorrowers] = useState({});
     const [expandedMonths, setExpandedMonths] = useState({});
 

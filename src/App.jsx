@@ -20,7 +20,7 @@ function App() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLoan, setEditingLoan] = useState(null);
   const [tick, setTick] = useState(0);
-  const [cloudSyncStatus, setCloudSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
+  const [cloudSyncStatus, setCloudSyncStatus] = useState('idle');
   const [selectedBorrower, setSelectedBorrower] = useState('');
   const [borrowerProfiles, setBorrowerProfiles] = useState([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -312,6 +312,7 @@ function App() {
 
   // Borrower Profile Handlers
   const handleSaveProfile = (profile) => {
+    console.log('Saving Profile:', profile);
     saveBorrowerProfile(profile);
     const updated = loadBorrowerProfiles();
     setBorrowerProfiles(updated);
