@@ -35,13 +35,16 @@ body {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--bg-primary);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--bg-tertiary);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
@@ -78,6 +81,7 @@ body {
   background-color: var(--accent-primary);
   color: white;
 }
+
 .btn-primary:hover {
   background-color: var(--accent-hover);
 }
@@ -86,6 +90,7 @@ body {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
 }
+
 .btn-secondary:hover {
   background-color: var(--border-color);
 }
@@ -116,9 +121,16 @@ body {
   font-size: 1rem;
   transition: border-color 0.2s;
 }
+
 .input-field:focus {
   border-color: var(--accent-primary);
   outline: none;
+}
+
+/* Fix for select options in dark mode */
+select option {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .table-container {
@@ -200,6 +212,7 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -211,9 +224,12 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: .5;
   }
@@ -224,7 +240,7 @@ body {
   .container {
     padding: 1rem;
   }
-  
+
   .card {
     padding: 1rem;
   }
@@ -241,7 +257,7 @@ body {
   .mobile-hidden {
     display: none;
   }
-  
+
   .desktop-hidden {
     display: block;
   }

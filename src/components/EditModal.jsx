@@ -69,6 +69,7 @@ const EditModal = ({ loan, isOpen, onClose, onSave }) => {
                             <option value="simple">Simple Interest</option>
                             <option value="emi">EMI (Home Loan)</option>
                             <option value="compound">Daily Compound (Line of Credit)</option>
+                            <option value="daily">Daily Interest (Daily Rate)</option>
                         </select>
                     </div>
 
