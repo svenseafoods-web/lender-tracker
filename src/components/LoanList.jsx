@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, ChevronRight, DollarSign, Edit2, CheckCircle, Clock, Trash2, Printer } from 'lucide-react';
-import { calculateInterest, calculateEMI, calculateDailyCompound, calculateDailySimpleInterest, formatCurrency } from '../utils/calculations';
+import { calculateInterest, calculateEMI, calculateDailyCompound, calculateDailySimpleInterest, formatCurrency, getLoanDetails } from '../utils/calculations';
 import InvoiceButton from './InvoiceButton';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 
@@ -19,46 +19,7 @@ const formatMonth = (dateStr) => {
     return `${month} ${year}`;
 };
 
-const getLoanDetails = (loan) => {
-    if (loan.loanType === 'emi') {
-        const emi = calculateEMI(loan.principal || loan.amount, loan.rate, loan.tenure);
-        return {
-            typeLabel: 'EMI Loan',
-            interestLabel: 'Monthly EMI',
-            interestValue: emi,
-            totalDue: emi, // For EMI, usually the due amount is the monthly installment
-            extraInfo: `${loan.tenure} Months`
-        };
-    } else if (loan.loanType === 'compound') {
-        const { interest, totalAmount, days } = calculateDailyCompound(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
-        return {
-            typeLabel: 'Daily Compound',
-            interestLabel: 'Acc. Interest',
-            interestValue: interest,
-            totalDue: totalAmount,
-            extraInfo: `${days} Days`
-        };
-    } else if (loan.loanType === 'daily') {
-        const { interest, totalAmount, days } = calculateDailySimpleInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
-        return {
-            typeLabel: 'Daily Interest',
-            interestLabel: 'Interest',
-            interestValue: interest,
-            totalDue: totalAmount,
-            extraInfo: `${days} Days`
-        };
-    } else {
-        // Default to Simple Interest
-        const { days, interest } = calculateInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
-        return {
-            typeLabel: 'Simple Interest',
-            interestLabel: 'Interest',
-            interestValue: interest,
-            totalDue: (loan.principal || loan.amount) + interest,
-            extraInfo: `${days} Days`
-        };
-    }
-};
+
 
 const MobileLoanCard = ({ loan, onEdit, onPayInterest, onDelete, borrowerProfile }) => {
     const { typeLabel, interestLabel, interestValue, totalDue, extraInfo } = getLoanDetails(loan);

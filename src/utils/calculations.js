@@ -127,3 +127,44 @@ export const formatCurrency = (amount) => {
         maximumFractionDigits: 0,
     }).format(amount);
 };
+
+export const getLoanDetails = (loan) => {
+    if (loan.loanType === 'emi') {
+        const emi = calculateEMI(loan.principal || loan.amount, loan.rate, loan.tenure);
+        return {
+            typeLabel: 'EMI Loan',
+            interestLabel: 'Monthly EMI',
+            interestValue: emi,
+            totalDue: emi, // For EMI, usually the due amount is the monthly installment
+            extraInfo: `${loan.tenure} Months`
+        };
+    } else if (loan.loanType === 'compound') {
+        const { interest, totalAmount, days } = calculateDailyCompound(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
+        return {
+            typeLabel: 'Daily Compound',
+            interestLabel: 'Acc. Interest',
+            interestValue: interest,
+            totalDue: totalAmount,
+            extraInfo: `${days} Days`
+        };
+    } else if (loan.loanType === 'daily') {
+        const { interest, totalAmount, days } = calculateDailySimpleInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
+        return {
+            typeLabel: 'Daily Interest',
+            interestLabel: 'Interest',
+            interestValue: interest,
+            totalDue: totalAmount,
+            extraInfo: `${days} Days`
+        };
+    } else {
+        // Default to Simple Interest
+        const { days, interest } = calculateInterest(loan.principal || loan.amount, loan.rate, loan.startDate, loan.endDate);
+        return {
+            typeLabel: 'Simple Interest',
+            interestLabel: 'Interest',
+            interestValue: interest,
+            totalDue: (loan.principal || loan.amount) + interest,
+            extraInfo: `${days} Days`
+        };
+    }
+};

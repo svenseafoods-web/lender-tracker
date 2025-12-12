@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Printer, MessageCircle, Mail } from 'lucide-react';
 import { generateInvoicePDF } from '../utils/pdfGenerator';
 import { UPI_ID } from '../config';
+import { getLoanDetails } from '../utils/calculations';
 
 const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = false }) => {
     const [generating, setGenerating] = useState(false);
@@ -18,13 +19,10 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
     };
 
     const calculateTotalInterest = () => {
-        // Calculate total interest from loans
+        // Calculate total interest from loans using robust logic
         return loans.reduce((total, loan) => {
-            const principal = loan.principal || loan.amount;
-            const rate = loan.rate || 0;
-            const days = Math.floor((new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
-            const interest = (principal * rate * days) / (365 * 100);
-            return total + interest;
+            const { interestValue } = getLoanDetails(loan);
+            return total + interestValue;
         }, 0);
     };
 
