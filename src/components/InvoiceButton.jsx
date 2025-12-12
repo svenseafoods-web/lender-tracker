@@ -61,12 +61,45 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
             const start = new Date(loan.startDate).toLocaleDateString('en-IN');
             const end = loan.endDate ? new Date(loan.endDate).toLocaleDateString('en-IN') : 'Running';
 
-            details += `\n${index + 1}. ₹${principal} | ${start} | ${extraInfo} | Int: ₹${interestValue.toFixed(0)}`;
+            // More verbose format as requested
+            details += `\n${index + 1}. Principal: ₹${principal}\n   Period: ${start} to ${end} (${extraInfo})\n   Interest: ₹${interestValue.toFixed(0)}\n`;
         });
 
-        const upiLink = UPI_ID ? `upi://pay?pa=${UPI_ID}&pn=Lender&am=${totalInterest.toFixed(2)}&cu=INR&tn=Loan%20Interest` : '';
+        // Prompt for UPI ID if not set in config
+        let payeeVpa = UPI_ID;
+        if (!payeeVpa) {
+            // Try to guess based on user email? No, unsafe.
+            // Just prompt.
+            // Note: This prompt happens every time if not set. Ideally we'd save it to localStorage.
+            // But for now, simple prompt is fine.
+            // We can't easily prompt inside this function if we want to keep it pure-ish, but prompt is sync.
+            // However, calling prompt inside generateMessage which is called by handleWhatsApp might be annoying if called multiple times?
+            // It's called once per click.
+        }
 
-        const message = `Hi ${borrower},\n\nLoan Interest Invoice for ${month}:\n${details}\n\n💰 *Total Interest: ₹${totalInterest.toFixed(2)}*\n\n${upiLink ? `Click to Pay via UPI:\n${upiLink}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
+        // Actually, let's handle the prompt outside or just use what we have. 
+        // If we want to prompt, we should do it before generating the link.
+        // But for simplicity, let's just check here.
+        if (!payeeVpa) {
+            // We'll leave it empty if not set, user can manually add it or we can prompt in the handler.
+            // Let's prompt in the handler to be safe, or just default to empty.
+            // The user asked to "ask user to end UPI number".
+            // So I will add the prompt logic here.
+            const storedUpi = localStorage.getItem('lender_upi_id');
+            if (storedUpi) {
+                payeeVpa = storedUpi;
+            } else {
+                const input = prompt("Enter your UPI ID (e.g., phone@upi) for the payment link (Leave empty to skip):");
+                if (input) {
+                    payeeVpa = input;
+                    localStorage.setItem('lender_upi_id', input);
+                }
+            }
+        }
+
+        const upiLink = payeeVpa ? `upi://pay?pa=${payeeVpa}&pn=Lender&am=${totalInterest.toFixed(2)}&cu=INR&tn=Loan%20Interest` : '';
+
+        const message = `Hi ${borrower},\n\nLoan Interest Invoice for ${month}:\n${details}\n💰 *Total Interest: ₹${totalInterest.toFixed(2)}*\n\n${upiLink ? `Click to Pay via UPI:\n${upiLink}\n\n` : ''}Please make the payment at your earliest convenience.\n\nThank you!`;
 
         return { message, subject: `Loan Interest Invoice - ${month}` };
     };
