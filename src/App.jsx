@@ -329,10 +329,29 @@ function App() {
   };
 
   const handleDeleteProfile = (borrowerName) => {
-    deleteBorrowerProfile(borrowerName);
-    const updated = loadBorrowerProfiles();
-    setBorrowerProfiles(updated);
-    alert(`✅ Profile deleted for ${borrowerName}`);
+    const borrowerLoans = loans.filter(l => l.borrower === borrowerName);
+    const loanCount = borrowerLoans.length;
+
+    if (loanCount > 0) {
+      if (window.confirm(`⚠️ DELETE BORROWER: ${borrowerName}\n\nThis borrower has ${loanCount} active loans.\n\nDo you want to DELETE EVERYTHING (Profile + All ${loanCount} Loans)?\n\nThis action cannot be undone.`)) {
+        // Delete loans
+        const loanIds = borrowerLoans.map(l => l.id);
+        setLoans(prev => prev.filter(l => !loanIds.includes(l.id)));
+
+        // Delete profile
+        deleteBorrowerProfile(borrowerName);
+        const updated = loadBorrowerProfiles();
+        setBorrowerProfiles(updated);
+        alert(`✅ Deleted ${borrowerName}'s profile and ${loanCount} loans.`);
+      }
+    } else {
+      if (window.confirm(`Delete profile for ${borrowerName}?`)) {
+        deleteBorrowerProfile(borrowerName);
+        const updated = loadBorrowerProfiles();
+        setBorrowerProfiles(updated);
+        alert(`✅ Profile deleted for ${borrowerName}`);
+      }
+    }
   };
 
   const handleOpenProfileModal = (borrowerName = null) => {

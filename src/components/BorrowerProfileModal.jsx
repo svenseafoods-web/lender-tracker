@@ -28,10 +28,8 @@ const BorrowerProfileModal = ({ isOpen, onClose, profile, existingBorrowers = []
     };
 
     const handleDelete = () => {
-        if (window.confirm(`Delete profile for ${formData.name}? This will not delete their loans.`)) {
-            onDelete(formData.name);
-            onClose();
-        }
+        onDelete(formData.name);
+        onClose();
     };
 
     if (!isOpen) return null;
