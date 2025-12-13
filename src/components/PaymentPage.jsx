@@ -60,20 +60,59 @@ const PaymentPage = () => {
                 </div>
             )}
 
-            <a href={upiLink} style={{
-                display: 'inline-block',
-                backgroundColor: '#2563eb',
-                color: 'white',
-                padding: '1rem 2rem',
-                borderRadius: '50px',
-                textDecoration: 'none',
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.3)',
-                transition: 'transform 0.1s'
-            }}>
-                Pay Now (PhonePe/GPay)
-            </a>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '300px' }}>
+                <a href={`phonepe://pay?pa=${pa}&pn=${encodeURIComponent(pn)}&am=${am}&cu=INR&tn=${encodeURIComponent(tn)}`} style={{
+                    display: 'block',
+                    backgroundColor: '#5f259f',
+                    color: 'white',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                    Pay via PhonePe
+                </a>
+
+                <a href={`tez://upi/pay?pa=${pa}&pn=${encodeURIComponent(pn)}&am=${am}&cu=INR&tn=${encodeURIComponent(tn)}`} style={{
+                    display: 'block',
+                    backgroundColor: '#1a73e8',
+                    color: 'white',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                    Pay via GPay
+                </a>
+
+                <a href={`paytmmp://pay?pa=${pa}&pn=${encodeURIComponent(pn)}&am=${am}&cu=INR&tn=${encodeURIComponent(tn)}`} style={{
+                    display: 'block',
+                    backgroundColor: '#00b9f1',
+                    color: 'white',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                    Pay via Paytm
+                </a>
+
+                <a href={upiLink} style={{
+                    display: 'block',
+                    backgroundColor: '#2563eb',
+                    color: 'white',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    marginTop: '0.5rem'
+                }}>
+                    Other UPI Apps
+                </a>
+            </div>
 
             <p style={{ marginTop: '2rem', color: '#666', fontSize: '0.9rem' }}>
                 Scan the QR code or click the button above to pay securely via your UPI app.

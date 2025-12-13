@@ -118,8 +118,8 @@ const InvoiceButton = ({ borrower, month, loans, borrowerProfile, compact = fals
         if (phone) {
             // Remove any spaces, dashes, or plus signs
             const cleanPhone = phone.replace(/[\s\-\+]/g, '');
-            // Use wa.me which is more robust
-            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+            // Use api.whatsapp.com which is more robust
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
     };
