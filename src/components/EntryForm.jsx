@@ -181,6 +181,7 @@ const EntryForm = ({ onAddLoan, existingBorrowers, loans = [] }) => {
                                 className="input-field"
                                 style={{ border: 'none', flex: 1, paddingLeft: 0 }}
                                 value={formData.startDate}
+                                max={new Date().toISOString().split('T')[0]}
                                 onChange={e => setFormData({ ...formData, startDate: e.target.value })}
                                 required
                             />

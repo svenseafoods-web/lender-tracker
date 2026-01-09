@@ -25,6 +25,7 @@ function App() {
   const [borrowerProfiles, setBorrowerProfiles] = useState([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [editingProfile, setEditingProfile] = useState(null);
+  const [lastSyncTime, setLastSyncTime] = useState(null); // Track when last sync completed
 
   // Load initial data and restore session
   useEffect(() => {
@@ -140,6 +141,7 @@ function App() {
         }
       }
       setCloudSyncStatus('success');
+      setLastSyncTime(Date.now()); // Mark sync completion time
     } catch (error) {
       console.error('Sync failed:', error);
 
@@ -170,6 +172,19 @@ function App() {
         return;
       }
 
+      // SAFETY CHECK: Don't backup if a sync just completed (within last 60 seconds)
+      // This prevents overwriting cloud data that was just downloaded
+      if (lastSyncTime && (Date.now() - lastSyncTime) < 60000) {
+        console.log('Skipping auto-backup: Sync completed recently, waiting to avoid conflicts.');
+        return;
+      }
+
+      // SAFETY CHECK: Don't backup while sync is in progress
+      if (cloudSyncStatus === 'syncing') {
+        console.log('Skipping auto-backup: Sync currently in progress.');
+        return;
+      }
+
       try {
         setCloudSyncStatus('syncing');
         await uploadEncryptedBackup(loans, borrowerProfiles, user.email, accessToken);
@@ -195,8 +210,8 @@ function App() {
       }
     };
 
-    // Initial backup after login/load - wait 10s to allow sync to finish first
-    const timer = setTimeout(autoBackup, 10000);
+    // Initial backup after login/load - wait 30s to allow sync to finish first (increased from 10s)
+    const timer = setTimeout(autoBackup, 30000);
 
     // Set up interval
     const interval = setInterval(autoBackup, 5 * 60 * 1000); // 5 minutes
@@ -204,7 +219,7 @@ function App() {
       clearTimeout(timer);
       clearInterval(interval);
     };
-  }, [accessToken, user, loans]);
+  }, [accessToken, user, loans, borrowerProfiles, lastSyncTime, cloudSyncStatus]);
 
   // Live update timer
   useEffect(() => {

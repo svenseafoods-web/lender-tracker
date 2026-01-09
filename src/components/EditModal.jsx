@@ -104,6 +104,7 @@ const EditModal = ({ loan, isOpen, onClose, onSave }) => {
                             type="date"
                             className="input-field"
                             value={formData.startDate || ''}
+                            max={new Date().toISOString().split('T')[0]}
                             onChange={e => setFormData({ ...formData, startDate: e.target.value })}
                             required
                         />
