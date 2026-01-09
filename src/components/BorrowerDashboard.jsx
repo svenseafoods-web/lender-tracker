@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, DollarSign, Percent, Clock, PlusCircle, RefreshCw, X, Edit3 } from 'lucide-react';
-import { calculateInterest, calculateEMI, calculateDailyCompound, formatCurrency } from '../utils/calculations';
+import { calculateInterest, calculateEMI, calculateDailyCompound, calculateDailySimpleInterest, formatCurrency } from '../utils/calculations';
 import LoanList from './LoanList'; // Reusing the list/table component
 
 const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest, onDelete, onBulkUpdateLoanType, onBulkUpdateRate }) => {
@@ -34,7 +34,7 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
                     const { interest } = calculateDailyCompound(principal, loan.rate, loan.startDate, loan.endDate);
                     earnedInterest += interest;
                 } else if (loan.loanType === 'daily') {
-                    const { interest } = calculateInterest(principal, loan.rate, loan.startDate, loan.endDate);
+                    const { interest } = calculateDailySimpleInterest(principal, loan.rate, loan.startDate, loan.endDate);
                     earnedInterest += interest;
                 } else {
                     // Simple interest
@@ -57,7 +57,7 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
                     totalInterest += interest;
                     totalDue += totalAmount;
                 } else if (loan.loanType === 'daily') {
-                    const { interest, totalAmount } = calculateInterest(principal, loan.rate, loan.startDate);
+                    const { interest, totalAmount } = calculateDailySimpleInterest(principal, loan.rate, loan.startDate);
                     totalInterest += interest;
                     totalDue += totalAmount;
                 } else {
