@@ -8,7 +8,7 @@ import Login from './components/Login';
 import SingleLoanView from './components/SingleLoanView';
 import BorrowerDashboard from './components/BorrowerDashboard';
 import BorrowerProfileModal from './components/BorrowerProfileModal';
-import { loadLoans, saveLoans, loadSession, saveSession, clearSession, downloadBackupFile, uploadBackupFile, loadBorrowerProfiles, saveBorrowerProfile, deleteBorrowerProfile } from './utils/storage';
+import { loadLoans, saveLoans, loadSession, saveSession, clearSession, downloadBackupFile, uploadBackupFile, loadBorrowerProfiles, saveBorrowerProfiles, saveBorrowerProfile, deleteBorrowerProfile } from './utils/storage';
 import { uploadEncryptedBackup, downloadEncryptedBackup } from './utils/driveApi';
 import { ALLOWED_EMAILS } from './config';
 import { LogOut, Download, Upload, Cloud, CloudOff, CloudUpload } from 'lucide-react';
