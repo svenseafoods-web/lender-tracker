@@ -141,6 +141,16 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
                     <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--warning)' }}>{formatCurrency(totals.totalInterest)}</div>
                 </div>
 
+                <div style={{ backgroundColor: 'var(--success-bg)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--success)' }}>
+                    <div style={{ color: 'var(--success)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Clock size={18} /> Earned Interest So Far
+                    </div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>{formatCurrency(totals.totalInterest)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        From start to today
+                    </div>
+                </div>
+
                 <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary)' }}>
                     <div style={{ color: 'var(--primary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <DollarSign size={18} /> Total Due Now
