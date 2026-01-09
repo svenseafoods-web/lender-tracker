@@ -100,24 +100,56 @@ const EditModal = ({ loan, isOpen, onClose, onSave }) => {
 
                     <div className="input-group">
                         <label className="input-label">Start Date</label>
-                        <input
-                            type="date"
-                            className="input-field"
-                            value={formData.startDate || ''}
-                            max={new Date().toISOString().split('T')[0]}
-                            onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                            required
-                        />
+                        <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
+                            <div
+                                style={{ padding: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                onClick={() => {
+                                    const input = document.getElementById('edit-start-date');
+                                    if (input) {
+                                        input.focus();
+                                        input.showPicker && input.showPicker();
+                                    }
+                                }}
+                            >
+                                📅
+                            </div>
+                            <input
+                                id="edit-start-date"
+                                type="date"
+                                className="input-field"
+                                style={{ border: 'none', flex: 1, paddingLeft: 0 }}
+                                value={formData.startDate || ''}
+                                max={new Date().toISOString().split('T')[0]}
+                                onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                                required
+                            />
+                        </div>
                     </div>
 
                     <div className="input-group">
                         <label className="input-label">End Date (Return Date)</label>
-                        <input
-                            type="date"
-                            className="input-field"
-                            value={formData.endDate || ''}
-                            onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                        />
+                        <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
+                            <div
+                                style={{ padding: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                onClick={() => {
+                                    const input = document.getElementById('edit-end-date');
+                                    if (input) {
+                                        input.focus();
+                                        input.showPicker && input.showPicker();
+                                    }
+                                }}
+                            >
+                                📅
+                            </div>
+                            <input
+                                id="edit-end-date"
+                                type="date"
+                                className="input-field"
+                                style={{ border: 'none', flex: 1, paddingLeft: 0 }}
+                                value={formData.endDate || ''}
+                                onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                            />
+                        </div>
                         <small style={{ color: 'var(--text-secondary)' }}>Set this date to mark principle as returned.</small>
                     </div>
 

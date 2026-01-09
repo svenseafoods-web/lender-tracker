@@ -175,8 +175,20 @@ const EntryForm = ({ onAddLoan, existingBorrowers, loans = [] }) => {
                     <div className="input-group">
                         <label className="input-label">Start Date</label>
                         <div className="input-field" style={{ display: 'flex', alignItems: 'center', padding: 0 }}>
-                            <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}><Calendar size={18} /></div>
+                            <div
+                                style={{ padding: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                onClick={() => {
+                                    const input = document.getElementById('loan-start-date');
+                                    if (input) {
+                                        input.focus();
+                                        input.showPicker && input.showPicker();
+                                    }
+                                }}
+                            >
+                                <Calendar size={18} />
+                            </div>
                             <input
+                                id="loan-start-date"
                                 type="date"
                                 className="input-field"
                                 style={{ border: 'none', flex: 1, paddingLeft: 0 }}
