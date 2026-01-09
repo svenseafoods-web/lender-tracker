@@ -28,7 +28,8 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
             if (loan.endDate) {
                 if (loan.loanType === 'emi') {
                     const emi = calculateEMI(principal, loan.rate, loan.tenure);
-                    earnedInterest += emi * loan.tenure; // Total interest paid over tenure
+                    const totalPaid = emi * loan.tenure;
+                    earnedInterest += (totalPaid - principal); // Only the interest portion
                 } else if (loan.loanType === 'compound') {
                     const { interest } = calculateDailyCompound(principal, loan.rate, loan.startDate, loan.endDate);
                     earnedInterest += interest;
@@ -53,6 +54,10 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
                     totalDue += emi;
                 } else if (loan.loanType === 'compound') {
                     const { interest, totalAmount } = calculateDailyCompound(principal, loan.rate, loan.startDate);
+                    totalInterest += interest;
+                    totalDue += totalAmount;
+                } else if (loan.loanType === 'daily') {
+                    const { interest, totalAmount } = calculateInterest(principal, loan.rate, loan.startDate);
                     totalInterest += interest;
                     totalDue += totalAmount;
                 } else {
