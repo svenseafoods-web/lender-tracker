@@ -19,11 +19,32 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
         let totalInterest = 0;
         let totalDue = 0;
         let activeCount = 0;
+        let earnedInterest = 0; // Interest from closed loans
 
         loans.forEach(loan => {
-            if (!loan.endDate) { // Only count active loans for totals
+            const principal = loan.principal || loan.amount;
+
+            // Calculate earned interest from CLOSED loans
+            if (loan.endDate) {
+                if (loan.loanType === 'emi') {
+                    const emi = calculateEMI(principal, loan.rate, loan.tenure);
+                    earnedInterest += emi * loan.tenure; // Total interest paid over tenure
+                } else if (loan.loanType === 'compound') {
+                    const { interest } = calculateDailyCompound(principal, loan.rate, loan.startDate, loan.endDate);
+                    earnedInterest += interest;
+                } else if (loan.loanType === 'daily') {
+                    const { interest } = calculateInterest(principal, loan.rate, loan.startDate, loan.endDate);
+                    earnedInterest += interest;
+                } else {
+                    // Simple interest
+                    const { interest } = calculateInterest(principal, loan.rate, loan.startDate, loan.endDate);
+                    earnedInterest += interest;
+                }
+            }
+
+            // Calculate current dues from ACTIVE loans only
+            if (!loan.endDate) {
                 activeCount++;
-                const principal = loan.principal || loan.amount;
                 totalPrincipal += principal;
 
                 if (loan.loanType === 'emi') {
@@ -42,7 +63,7 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
             }
         });
 
-        return { totalPrincipal, totalInterest, totalDue, activeCount };
+        return { totalPrincipal, totalInterest, totalDue, activeCount, earnedInterest };
     }, [loans]);
 
     const handleBulkUpdate = () => {
@@ -145,9 +166,9 @@ const BorrowerDashboard = ({ borrowerName, loans, onBack, onEdit, onPayInterest,
                     <div style={{ color: 'var(--success)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Clock size={18} /> Earned Interest So Far
                     </div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>{formatCurrency(totals.totalInterest)}</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>{formatCurrency(totals.earnedInterest)}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                        From start to today
+                        From {loans.filter(l => l.endDate).length} closed loans
                     </div>
                 </div>
 
