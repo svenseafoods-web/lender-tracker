@@ -1,5 +1,5 @@
 import React from 'react';
-import { calculateInterest, calculateEMI, calculateDailyCompound, formatCurrency } from '../utils/calculations';
+import { calculateInterest, calculateEMI, calculateDailyCompound, calculateDailySimpleInterest, formatCurrency } from '../utils/calculations';
 
 const SummaryCards = ({ loans }) => {
     const stats = loans.reduce((acc, loan) => {
