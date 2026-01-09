@@ -8,15 +8,23 @@ const SummaryCards = ({ loans }) => {
         let interest = 0;
 
         if (loan.loanType === 'emi') {
-            // For EMI, we can consider the "interest" component of the *next* EMI, 
-            // or just sum the total EMIs paid vs principal. 
-            // For summary simplicity, let's use the monthly EMI amount as "pending" for active loans
             const emi = calculateEMI(principal, loan.rate, loan.tenure);
-            interest = emi;
+            if (isReturned) {
+                // For returned EMI loans, calculate total interest paid
+                const totalPaid = emi * loan.tenure;
+                interest = totalPaid - principal; // Only interest portion
+            } else {
+                // For active EMI loans, use monthly EMI as pending
+                interest = emi;
+            }
         } else if (loan.loanType === 'compound') {
-            const result = calculateDailyCompound(principal, loan.rate, loan.startDate);
+            const result = calculateDailyCompound(principal, loan.rate, loan.startDate, loan.endDate);
+            interest = result.interest;
+        } else if (loan.loanType === 'daily') {
+            const result = calculateDailySimpleInterest(principal, loan.rate, loan.startDate, loan.endDate);
             interest = result.interest;
         } else {
+            // Simple interest
             const result = calculateInterest(principal, loan.rate, loan.startDate, loan.endDate);
             interest = result.interest;
         }
@@ -32,8 +40,6 @@ const SummaryCards = ({ loans }) => {
             acc.pendingInterest += interest;
         } else {
             // For returned loans, count the interest as earned
-            // Note: For EMI/Compound, "earned" logic might need more complex history tracking
-            // For now, we use the calculated interest at time of return
             acc.totalEarned += interest;
         }
 
